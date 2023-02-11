@@ -40,7 +40,7 @@ void tokenize(std::string& input, Reader& reader)
     for (std::sregex_iterator i = words_begin; i != words_end; ++i) {
         std::smatch match = *i;
         std::string match_str = match[1];
-        if (match_str.length() > 0) {
+        if (match_str.length() > 0 && match_str[0] != ';') {
             reader.tokens.push_back(match_str);
         }
     }
@@ -48,6 +48,9 @@ void tokenize(std::string& input, Reader& reader)
 
 MALType* read_form(Reader& reader)
 {
+    if (reader.tokens.size() <= 0) {
+        return new MALNilType();
+    }
     auto token = reader.peek();
     switch (token[0])
     {
@@ -71,7 +74,13 @@ MALType* read_list(Reader& reader)
     auto malList = new MALListType();
     reader.next();
     for (;;) {
-        auto token = reader.peek();
+        Token token;
+        try {
+            token = reader.peek();
+        }
+        catch (std::runtime_error& e) {
+            throw std::runtime_error("ERROR: Unmatched '('");
+        }
         switch (token[0])
         {
         case ')':
@@ -92,7 +101,13 @@ MALType* read_vector(Reader& reader)
     auto malVector = new MALVectorType();
     reader.next();
     for (;;) {
-        auto token = reader.peek();
+        Token token;
+        try {
+            token = reader.peek();
+        }
+        catch (std::runtime_error& e) {
+            throw std::runtime_error("ERROR: Unmatched '['");
+        }
         switch (token[0])
         {
         case ']':
@@ -130,7 +145,13 @@ MALType* read_map(Reader& reader)
     auto malVector = new MALVectorType();
     reader.next();
     for (;;) {
-        auto token = reader.peek();
+        Token token;
+        try {
+            token = reader.peek();
+        }
+        catch (std::runtime_error& e) {
+            throw std::runtime_error("ERROR: Unmatched '{'");
+        }
         switch (token[0])
         {
         case '}':

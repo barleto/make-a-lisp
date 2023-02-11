@@ -15,3 +15,14 @@ D
 {a 2 3r :a}
 {a 2 3r ( 1 2 3 4)}
 {a 2 (3r) :a}
+1212 ;asdas asdasda
+( as ;asa )
+( as
+;asd
+;asda
+( asa ;asd )
+( ;asd )
+( asd )
+;asd
+( asd )
+( ;asd )
