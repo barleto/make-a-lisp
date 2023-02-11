@@ -1,5 +1,7 @@
 .deps
 *.o
 *.a
+*.exe
 step0_repl
 step1_read_print
+.vscode
