@@ -65,6 +65,36 @@ MALType* handleIf(MALListType* astList, Env* env)
     return EVAL(astList->values[3], env);
 }
 
+
+MALType* handleClosure(MALListType* astList, Env* env)
+{
+    /*Return a new function closure. The body of that closure does the following:
+    - Create a new environment using env (closed over from outer scope) as the outer parameter,
+    the first parameter (second list element of ast from the outer scope) as the binds parameter,
+    and the parameters to the closure as the exprs parameter.
+    - Call EVAL on the second parameter (third list element of ast from outer scope), using the new environment.
+    Use the result as the return value of the closure.
+    */
+    checkArgsIs("if", astList, 3, astList->values.size());
+    if (astList->values[1]->type() != MALType::Types::List) {
+        throw std::runtime_error("Error: First parameter of 'fn*' mus be a list. Found: " + astList->values[1]->to_string());
+    }
+    auto bindingsList = (MALListType*)astList->values[1];
+    for (auto p = bindingsList->values.begin(); p != bindingsList->values.end(); p++) {
+        auto element = *p;
+        if (element->type() != MALType::Types::Symbol) {
+            throw std::runtime_error("ERROR: All elements of the binding list of 'fn*' must be symbols. Found: " + element->to_string());
+        }
+    }
+    auto fnBody = astList->values[2];
+    return new MALFuncType(astList->to_string(), (MALFunctor)[env, bindingsList, fnBody](std::vector<MALType*> args) -> MALType* {
+        Env* newEnv = new Env(env, bindingsList, args);
+        auto result = EVAL(fnBody->deepCopy(), newEnv);
+        //delete newEnv;
+        return result;
+    });
+}
+
 MALType* handleSpecialForms(MALListType* astList, Env* env, MALSymbolType* lookupSymbol) {
     if (lookupSymbol->name == "def!") {
         return handleDefBang(astList, env);
@@ -79,31 +109,7 @@ MALType* handleSpecialForms(MALListType* astList, Env* env, MALSymbolType* looku
         return handleIf(astList, env);
     }
     else if (lookupSymbol->name == "fn*") {
-        /*Return a new function closure. The body of that closure does the following:
-        - Create a new environment using env (closed over from outer scope) as the outer parameter, 
-            the first parameter (second list element of ast from the outer scope) as the binds parameter, 
-            and the parameters to the closure as the exprs parameter.
-        - Call EVAL on the second parameter (third list element of ast from outer scope), using the new environment. 
-            Use the result as the return value of the closure.
-        */
-        checkArgsIs("if", astList, 3, astList->values.size());
-        if (astList->values[1]->type() != MALType::Types::List) {
-            throw std::runtime_error("Error: First parameter of 'fn*' mus be a list. Found: " + astList->values[1]->to_string());
-        }
-        auto bindingsList = (MALListType*)astList->values[1];
-        for (auto p = bindingsList->values.begin(); p != bindingsList->values.end(); p++) {
-            auto element = *p;
-            if (element->type() != MALType::Types::Symbol) {
-                throw std::runtime_error("ERROR: All elements of the binding list of 'fn*' must be symbols. Found: " + element->to_string());
-            }
-        }
-        auto fnBody = astList->values[2];
-        return new MALFuncType(astList->to_string(), (MALFunctor)[env, bindingsList, fnBody](std::vector<MALType*> args) -> MALType* {
-            auto newEnv = new Env(env, bindingsList, args);
-            auto result = EVAL(fnBody->deepCopy() , newEnv);
-            //delete newEnv;
-            return result;
-        });
+        return handleClosure(astList, env);
     }
     return nullptr;
 }

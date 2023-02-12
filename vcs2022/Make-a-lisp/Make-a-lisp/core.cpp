@@ -31,10 +31,20 @@ MALType* divs(std::vector<MALType*> args) {
     return new MALNumberType(result);
 }
 
-MALType* prn(std::vector<MALType*> args) {
+MALType* print(std::vector<MALType*> args) {
     auto nil = new MALNilType();
-    checkArgsIsAtLeast("prn", new MALNilType(), 1, args.size());
-    std::cout << pr_str(args[0]) << std::endl; 
+    for (auto p = args.begin(); p != args.end(); p++) {
+        std::cout << pr_str(*p) << " ";
+    }
+    std::cout << std::endl;
+    return new MALNilType();
+}
+
+MALType* println(std::vector<MALType*> args) {
+    auto nil = new MALNilType();
+    for (auto p = args.begin(); p != args.end(); p++) {
+        std::cout << pr_str(*p) << std::endl;
+    }
     return new MALNilType();
 }
 
@@ -103,12 +113,20 @@ MALType* gte(std::vector<MALType*> args) {
     return new MALBoolType(((MALNumberType*)args[0])->value >= ((MALNumberType*)args[1])->value);
 }
 
+MALType* dlog(std::vector<MALType*> args) {
+    auto nil = new MALNilType();
+    checkArgsIsAtLeast("dlog", new MALNilType(), 1, args.size());
+    std::cout << pr_str(args[0]) << std::endl;
+    return args[0];
+}
+
 std::map<std::string, MALFunctor> ns = {
     {"+", add},
     {"-", sub},
     {"*", mult},
     {"/", divs},
-    {"prn", prn},
+    {"print", print},
+    {"println", println},
     {"list", list},
     {"list?", isList},
     {"empty?", isEmpty},
@@ -119,6 +137,7 @@ std::map<std::string, MALFunctor> ns = {
     {"<=", lte},
     {">", gt},
     {">=", gte},
+    {"dlog", dlog},
 };
 
 void addBuiltInOperationsToEnv(Env* env)

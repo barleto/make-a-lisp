@@ -15,3 +15,5 @@ MALType* eval_ast(MALType* ast, Env* env);
 
 MALType* handleSpecialForms(MALListType* astList, Env* env, MALSymbolType* lookupSymbol);
 
+MALType* handleClosure(MALListType* astList, Env* env);
+

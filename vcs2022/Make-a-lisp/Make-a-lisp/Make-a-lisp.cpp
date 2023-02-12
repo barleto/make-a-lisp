@@ -103,7 +103,7 @@ int main() {
 
     auto env = new Env();
     addBuiltInOperationsToEnv(env);
-
+    rep("(def! not (fn* (a) (if a false true)))", env);
     for (;;) {
         auto quit = linenoise::Readline("user> ", input);
         if (quit)
