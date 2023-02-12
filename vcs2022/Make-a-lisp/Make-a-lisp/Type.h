@@ -4,109 +4,128 @@
 #include <vector>
 #include <regex>
 #include <map>
-
-enum MALTypes {
-	Undefined,
-	List,
-	Int,
-	Symbol,
-	String,
-	Bool,
-	Nil,
-	Keyword,
-	Vectors,
-	HashMap
-};
+#include <functional>
+#include <unordered_map>
 
 #pragma once
 class MALType
 {
-
 public: 
+	enum Types {
+		List,
+		Float,
+		Symbol,
+		String,
+		Bool,
+		Nil,
+		Keyword,
+		Vector,
+		HashMap
+	};
+
 	virtual std::string to_string() = 0;
-	const MALTypes type = MALTypes::Undefined;
-	virtual const bool isCompound() = 0;
+	virtual MALType::Types type() const = 0;
+	virtual const bool isCompound() const = 0;
 }; 
 
 class MALAtomType : public MALType
 {
 public:
-	virtual std::string to_string() = 0;
-	virtual const bool isCompound() override;
+	virtual const bool isCompound() const override { return false; };
 };
 
 class MALCompoundType : public MALType
 {
 public:
-	virtual std::string to_string() = 0;
-	virtual const bool isCompound() override;
+	virtual const bool isCompound() const override { return true; };
 };
 
 class MALListType : public MALCompoundType
 {
 public:
-	const MALTypes type = MALTypes::List;
-	const bool isCompound = true;
 	std::vector<MALType*> values;
 	virtual std::string to_string() override;
+	virtual MALType::Types type() const override { return  MALType::Types::List; }
+	~MALListType() {
+		for (auto p = values.begin(); p != values.end(); p++) {
+			delete *p;
+		}
+	}
 };
 
-class MALIntType : public MALAtomType {
+class MALNumberType : public MALAtomType {
 public:
-	const MALTypes type = MALTypes::Int;
-	int value;
-	MALIntType(int value) : value(value) {}
+	float value;
+	MALNumberType(float value) : value(value) {}
 	virtual std::string to_string() override;
+	virtual MALType::Types type() const override { return  MALType::Types::Float; }
 };
 
 class MALSymbolType : public MALAtomType {
 public:
-	const MALTypes type = MALTypes::Symbol;
 	std::string name;
 	MALSymbolType(std::string& name) : name(name) {}
 	virtual std::string to_string() override;
+	virtual MALType::Types type() const override { return  MALType::Types::Symbol; }
 };
 
 class MALStringType : public MALAtomType {
 public:
-	const MALTypes type = MALTypes::String;
 	std::string value;
 	MALStringType(std::string value) : value(value) {}
 	virtual std::string to_string() override;
+	virtual MALType::Types type() const override { return  MALType::Types::String; }
 };
 
 class MALNilType : public MALAtomType {
 public:
-	const MALTypes type = MALTypes::Nil;
 	virtual std::string to_string() override;
+	virtual MALType::Types type() const override { return  MALType::Types::Nil; }
 };
 
 class MALBoolType : public MALAtomType {
 public:
-	const MALTypes type = MALTypes::Nil;
 	bool value;
 	MALBoolType(bool value) : value(value) {}
 	virtual std::string to_string() override;
+	virtual MALType::Types type() const override { return  MALType::Types::Bool; }
 };
 
 class MalKeywordType : public MALAtomType {
 public:
-	const MALTypes type = MALTypes::Keyword;
 	std::string value;
 	MalKeywordType(std::string value) : value(value) {}
 	virtual std::string to_string() override;
+	virtual MALType::Types type() const override { return  MALType::Types::Keyword; }
 };
 
 class MALVectorType : public MALCompoundType {
 public:
-	const MALTypes type = MALTypes::Vectors;
 	std::vector<MALType*> values;
 	virtual std::string to_string() override;
+	virtual MALType::Types type() const override { return  MALType::Types::Vector; }
 };
 
 class MALHashMapType : public MALCompoundType {
 public:
-	const MALTypes type = MALTypes::Vectors;
 	std::map<MALType*, MALType*> values;
 	virtual std::string to_string() override;
+	virtual MALType::Types type() const override { return  MALType::Types::HashMap; }
 };
+
+struct SymbolHash {
+	std::size_t operator()(MALSymbolType* const& symbolKey) const noexcept
+	{
+		return std::hash<std::string> {}(symbolKey->name);
+	}
+};
+
+struct SymbolEqualPred {
+	bool operator()(const MALSymbolType* lhs, const MALSymbolType* rhs) const
+	{
+		return lhs->name == rhs->name;
+	}
+};
+
+using MALFunc = std::function<MALType* (std::vector<MALType*>)>;
+using Env = std::unordered_map<MALSymbolType*, MALFunc, SymbolHash, SymbolEqualPred>;

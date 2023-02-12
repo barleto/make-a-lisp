@@ -13,7 +13,7 @@ std::string MALListType::to_string()
     return "(" + result+ ")";
 }
 
-std::string MALIntType::to_string()
+std::string MALNumberType::to_string()
 {
     return std::to_string(this->value);
 }
@@ -70,14 +70,4 @@ std::string MALHashMapType::to_string()
         }
     }
     return "{" + result + "}";
-}
-
-const bool MALAtomType::isCompound()
-{
-    return false;
-}
-
-const bool MALCompoundType::isCompound()
-{
-    return true;
 }

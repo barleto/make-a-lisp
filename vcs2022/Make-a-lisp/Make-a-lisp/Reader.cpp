@@ -78,7 +78,7 @@ MALType* read_list(Reader& reader)
         try {
             token = reader.peek();
         }
-        catch (std::runtime_error& e) {
+        catch (std::runtime_error&) {
             throw std::runtime_error("ERROR: Unmatched '('");
         }
         switch (token[0])
@@ -105,7 +105,7 @@ MALType* read_vector(Reader& reader)
         try {
             token = reader.peek();
         }
-        catch (std::runtime_error& e) {
+        catch (std::runtime_error&) {
             throw std::runtime_error("ERROR: Unmatched '['");
         }
         switch (token[0])
@@ -149,7 +149,7 @@ MALType* read_map(Reader& reader)
         try {
             token = reader.peek();
         }
-        catch (std::runtime_error& e) {
+        catch (std::runtime_error&) {
             throw std::runtime_error("ERROR: Unmatched '{'");
         }
         switch (token[0])
@@ -173,7 +173,7 @@ MALType* read_atom(Reader& reader)
 
     std::regex intRegex("^[0-9]+$", std::regex_constants::ECMAScript);
     if (std::regex_search(token, intRegex)) {
-        return new MALIntType(stoi(token));
+        return new MALNumberType(stoi(token));
     }
     else if (token[0] == '"') {
         return new MALStringType(token);
