@@ -8,6 +8,7 @@
 #include <unordered_map>
 
 #pragma once
+
 class MALType
 {
 public: 
@@ -20,7 +21,8 @@ public:
 		Nil,
 		Keyword,
 		Vector,
-		HashMap
+		HashMap,
+		Function
 	};
 
 	virtual std::string to_string() = 0;
@@ -113,19 +115,14 @@ public:
 	virtual MALType::Types type() const override { return  MALType::Types::HashMap; }
 };
 
-struct SymbolHash {
-	std::size_t operator()(MALSymbolType* const& symbolKey) const noexcept
-	{
-		return std::hash<std::string> {}(symbolKey->name);
-	}
+using MALFunctor = std::function<MALType* (std::vector<MALType*>)>;
+
+class MALFuncType : public MALAtomType {
+public:
+	MALFuncType(std::string name, MALFunctor fn) : name(name), fn(fn) {}
+	std::string name;
+	MALFunctor fn;
+	virtual std::string to_string() override;
+	virtual MALType::Types type() const override { return  MALType::Types::Function; }
 };
 
-struct SymbolEqualPred {
-	bool operator()(const MALSymbolType* lhs, const MALSymbolType* rhs) const
-	{
-		return lhs->name == rhs->name;
-	}
-};
-
-using MALFunc = std::function<MALType* (std::vector<MALType*>)>;
-using Env = std::unordered_map<MALSymbolType*, MALFunc, SymbolHash, SymbolEqualPred>;

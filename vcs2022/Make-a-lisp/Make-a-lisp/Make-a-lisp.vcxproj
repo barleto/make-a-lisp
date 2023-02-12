@@ -139,11 +139,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Env.cpp" />
     <ClCompile Include="Make-a-lisp.cpp" />
     <ClCompile Include="Reader.cpp" />
     <ClCompile Include="Type.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Env.h" />
     <ClInclude Include="linenoise.h" />
     <ClInclude Include="Reader.h" />
     <ClInclude Include="Type.h" />

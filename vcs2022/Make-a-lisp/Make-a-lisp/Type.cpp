@@ -71,3 +71,8 @@ std::string MALHashMapType::to_string()
     }
     return "{" + result + "}";
 }
+
+std::string MALFuncType::to_string()
+{
+    return "<function:"+this->name+">";
+}
