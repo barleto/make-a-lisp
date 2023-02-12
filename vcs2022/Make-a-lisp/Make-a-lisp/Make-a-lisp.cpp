@@ -25,12 +25,29 @@ MALType* eval_ast(MALType* ast, Env& env) {
         return ast;
     }
     case MALType::Types::List: {
-        auto oldList = (MALListType*)ast;
-        auto newList = new MALListType();
-        for (auto p = oldList->values.begin(); p != oldList->values.end(); p++) {
-            newList->values.push_back(EVAL(*p, env));
+        auto list = (MALListType*)ast;
+        auto size = list->values.size();
+        for (int i = 0; i < size; i++) {
+            list->values[i] = (EVAL(list->values[i], env));
         }
-        return newList;
+        return list;
+        break;
+    }
+    case MALType::Types::Vector: {
+        auto vector = (MALVectorType*)ast;
+        auto size = vector->values.size();
+        for (int i = 0; i < size; i++) {
+            vector->values[i] = (EVAL(vector->values[i], env));
+        }
+        return vector;
+        break;
+    }
+    case MALType::Types::HashMap: {
+        auto map = (MALHashMapType*)ast;
+        for (auto p = map->values.begin(); p != map->values.end(); p++) {
+            map->values[p->first] = EVAL(p->second, env);
+        }
+        return map;
         break;
     }
     default:
@@ -84,50 +101,34 @@ MALFunc wrapLambda(MALFunc lambda) {
 }
 
 MALType* add(std::vector<MALType*> args) {
-    assert(args.size() == 2);
-    auto a = args[0];
-    auto b = args[1];
-
-    assert(a->type() == MALType::Types::Float);
-    assert(b->type() == MALType::Types::Float);
-
-    float result = ((MALNumberType*)a)->value + ((MALNumberType*)b)->value;
+    float result = 0;
+    for (auto p = args.begin(); p != args.end(); p++) {
+        result += ((MALNumberType*)*p)->value;
+    }
     return new MALNumberType(result);
 }
 
 MALType* sub(std::vector<MALType*> args) {
-    assert(args.size() == 2);
-    auto a = args[0];
-    auto b = args[1];
-
-    assert(a->type() == MALType::Types::Float);
-    assert(b->type() == MALType::Types::Float);
-
-    float result = ((MALNumberType*)a)->value - ((MALNumberType*)b)->value;
+    float result = 0;
+    for (auto p = args.begin(); p != args.end(); p++) {
+        result -= ((MALNumberType*)*p)->value;
+    }
     return new MALNumberType(result);
 }
 
 MALType* mult(std::vector<MALType*> args) {
-    assert(args.size() == 2);
-    auto a = args[0];
-    auto b = args[1];
-
-    assert(a->type() == MALType::Types::Float);
-    assert(b->type() == MALType::Types::Float);
-
-    float result = ((MALNumberType*)a)->value * ((MALNumberType*)b)->value;
+    float result = 1;
+    for (auto p = args.begin(); p != args.end(); p++) {
+        result *= ((MALNumberType*)*p)->value;
+    }
     return new MALNumberType(result);
 }
 
 MALType* divs(std::vector<MALType*> args) {
-    assert(args.size() == 2);
-    auto a = args[0];
-    auto b = args[1];
-
-    assert(a->type() == MALType::Types::Float);
-    assert(b->type() == MALType::Types::Float);
-
-    float result = ((MALNumberType*)a)->value / ((MALNumberType*)b)->value;
+    float result = args.size() > 0? ((MALNumberType*)args[0])->value : 0;
+    for (auto p = args.begin(); p != args.end(); p++) {
+        result /= ((MALNumberType*)*p)->value;
+    }
     return new MALNumberType(result);
 }
 
