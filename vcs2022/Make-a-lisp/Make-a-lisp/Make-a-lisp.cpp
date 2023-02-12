@@ -8,23 +8,24 @@
 #include "Reader.h"
 #include "Type.h"
 #include "Env.h"
+#include "SpecFormHandler.h"
+#include "core.h"
 
 MALType* READ(std::string input) { 
     return read_str(input);
 }
 
-MALType* EVAL(MALType* ast, Env& env);
+MALType* EVAL(MALType* ast, Env* env);
 
-MALType* eval_ast(MALType* ast, Env& env) {
+MALType* eval_ast(MALType* ast, Env* env) {
     switch (ast->type()) {
     case MALType::Types::Symbol: {
         auto symbol = (MALSymbolType*)ast;
-        return env.get(symbol);
+        return env->get(symbol);
     }
     case MALType::Types::List: {
         auto list = (MALListType*)ast;
-        auto size = list->values.size();
-        for (int i = 0; i < size; i++) {
+        for (int i = 0; i < list->values.size(); i++) {
             list->values[i] = (EVAL(list->values[i], env));
         }
         return list;
@@ -53,44 +54,7 @@ MALType* eval_ast(MALType* ast, Env& env) {
     }
 }
 
-MALType* handleSpecialForms(MALListType* astList, Env& env, MALSymbolType* lookupSymbol) {
-    if (lookupSymbol->name == "def!") {
-        if (astList->values.size() < 3) {
-            throw std::runtime_error("ERROR: 'def!' need at least two params. Params found: '" + astList->to_string() + "'");
-        }
-        if (astList->values[1]->type() != MALType::Types::Symbol) {
-            throw std::runtime_error("ERROR: 'def!' first param must be a symbol.");
-        }
-        auto symbol = (MALSymbolType*)astList->values[1];
-        auto evaledValue = EVAL(astList->values[2], env);
-        env.set(symbol, evaledValue);
-        return evaledValue;
-    } else if (lookupSymbol->name == "let*") {
-        if (astList->values.size() < 3) {
-            throw std::runtime_error("ERROR: 'let*' need at least two params. Params found: '" + astList->to_string() + "'");
-        }
-        auto newEnv(env);
-        if (!astList->values[1]->isIteratable()) {
-            throw std::runtime_error("ERROR: 'let*' binding list must be of type list or vector.");
-        }
-        auto bindingList = (MALIteratableContainerType*)astList->values[1];
-        if (bindingList->size() % 2 != 0) {
-            throw std::runtime_error("ERROR: Mismatched number of elements in binding list: '"+ bindingList->to_string() + "'.");
-        }
-        for (int i = 0; i < bindingList->size(); i += 2) {
-            if (bindingList->getAt(i)->type() != MALType::Types::Symbol) {
-                throw std::runtime_error("ERROR: First element in a binding pair must be a symbol. Found '" + bindingList->getAt(i)->to_string() + "' instead.");
-            }
-            auto symbol = (MALSymbolType*)bindingList->getAt(i);
-            auto evaledValue = EVAL(bindingList->getAt(i + 1), newEnv);
-            newEnv.set(symbol, evaledValue);
-        }
-        return EVAL(astList->values[2], newEnv);
-    }
-    return nullptr;
-}
-
-MALType* EVAL(MALType* ast, Env& env) {
+MALType* EVAL(MALType* ast, Env* env) {
     if (ast->type() != MALType::Types::List) {
         return eval_ast(ast, env);
     }
@@ -107,26 +71,21 @@ MALType* EVAL(MALType* ast, Env& env) {
     }
 
     auto evalList = (MALListType*)eval_ast(list, env);
-    auto symbol = (MALSymbolType*)evalList->values[0];
-    if (symbol->type() != MALType::Types::Function) {
+    auto func = (MALFuncType*)evalList->values[0];
+    if (func->type() != MALType::Types::Function) {
         return ast;
     }
 
-    evalList->values.erase(evalList->values.begin());
-    auto malType = env.get(symbol);
-    if (malType->type() != MALType::Types::Function) {
-        throw std::runtime_error("EVAL error: Symbol '" + symbol->name + "' is not a function.");
-    }
-    auto funcType = (MALFuncType*)malType;
-    return funcType->fn(evalList->values);
-    
+    auto args = evalList->values;
+    args.erase(args.begin());
+    return func->fn(args);
 }
 
 std::string PRINT(std::string input) { 
     return input;
 }
 
-std::string rep(std::string input, Env& env) {
+std::string rep(std::string input, Env* env) {
     try {
         auto ast = READ(input);
         auto result = EVAL(ast, env);
@@ -137,54 +96,13 @@ std::string rep(std::string input, Env& env) {
     }
 }
 
-MALType* add(std::vector<MALType*> args) {
-    float result = 0;
-    for (auto p = args.begin(); p != args.end(); p++) {
-        result += ((MALNumberType*)*p)->value;
-    }
-    return new MALNumberType(result);
-}
-
-MALType* sub(std::vector<MALType*> args) {
-    float result = 0;
-    for (auto p = args.begin(); p != args.end(); p++) {
-        result -= ((MALNumberType*)*p)->value;
-    }
-    return new MALNumberType(result);
-}
-
-MALType* mult(std::vector<MALType*> args) {
-    float result = 1;
-    for (auto p = args.begin(); p != args.end(); p++) {
-        result *= ((MALNumberType*)*p)->value;
-    }
-    return new MALNumberType(result);
-}
-
-MALType* divs(std::vector<MALType*> args) {
-    float result = args.size() > 0? ((MALNumberType*)args[0])->value : 0;
-    for (auto p = args.begin(); p != args.end(); p++) {
-        result /= ((MALNumberType*)*p)->value;
-    }
-    return new MALNumberType(result);
-}
-
 int main() {
     const auto history_path = "history.txt";
     linenoise::LoadHistory(history_path);
     std::string input;
 
-    Env env;
-    std::string op;
-    op = "+";
-    env.set(new MALSymbolType(op), new MALFuncType(op, add));
-    op = "-";
-    env.set(new MALSymbolType(op), new MALFuncType(op, sub));
-    op = "*";
-    env.set(new MALSymbolType(op), new MALFuncType(op, mult));
-    op = "/";
-    env.set(new MALSymbolType(op), new MALFuncType(op, divs));
-
+    auto env = new Env();
+    addBuiltInOperationsToEnv(env);
 
     for (;;) {
         auto quit = linenoise::Readline("user> ", input);

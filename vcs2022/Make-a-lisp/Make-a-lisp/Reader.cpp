@@ -130,7 +130,7 @@ MALHashMapType* vectorToMalMap(std::vector<MALType*>& vector) {
 
     auto malMap = new MALHashMapType();
     for (int i = 0; i < vector.size(); i += 2) {
-        if (vector[i]->isCompound()) {
+        if (vector[i]->isContainer()) {
             throw std::runtime_error("Error parsing HashMap: Keys can't be of conpound type.");
         }
         auto key = vector[i];

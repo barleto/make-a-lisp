@@ -16,7 +16,6 @@ struct SymbolHash {
 		return std::hash<std::string> {}(symbolKey->name);
 	}
 };
-
 struct SymbolEqualPred {
 	bool operator()(const MALSymbolType* lhs, const MALSymbolType* rhs) const
 	{
@@ -28,9 +27,10 @@ using EnvTable = std::unordered_map<MALSymbolType*, MALType*, SymbolHash, Symbol
 
 class Env {
 	EnvTable data;
-	Env* outer;
+	Env* outer = nullptr;
 public:
-	Env(Env* outer = nullptr) : outer(outer) {}
+	Env(Env* outer = nullptr);
+	Env(Env* outer, MALListType* bindings, std::vector<MALType*> exprs);
 	// takes a symbol key and a mal value and adds to the data structure
 	void set(MALSymbolType* symbol, MALType* funType);
 	/*takes a symbol key and if the current environment contains that key then return the environment. 
@@ -39,4 +39,5 @@ public:
 	/*takes a symbol key and uses the find method to locate the environment with the key, then returns the matching value. 
 	If no key is found up the outer chain, then throws/raises a "not found" error.*/
 	MALType* get(MALSymbolType* symbol);
+	std::string dataToString();
 };

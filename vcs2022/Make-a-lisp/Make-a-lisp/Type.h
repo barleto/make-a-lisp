@@ -11,7 +11,7 @@
 
 class MALType
 {
-public: 
+public:
 	enum Types {
 		List,
 		Float,
@@ -25,22 +25,26 @@ public:
 		Function
 	};
 
+	static std::string typeToString(Types t);
+
 	virtual std::string to_string() = 0;
 	virtual MALType::Types type() const = 0;
-	virtual const bool isCompound() const = 0;
+	virtual const bool isContainer() const = 0;
 	virtual bool isIteratable() { return false; };
-}; 
+	virtual bool isEqualTo(MALType* other) = 0;
+	virtual MALType* deepCopy() = 0;
+};
 
 class MALAtomType : public MALType
 {
 public:
-	virtual const bool isCompound() const override { return false; };
+	virtual const bool isContainer() const override { return false; };
 };
 
 class MALContainerType : public MALType
 {
 public:
-	virtual const bool isCompound() const override { return true; };
+	virtual const bool isContainer() const override { return true; };
 	virtual size_t size() = 0;
 };
 
@@ -55,21 +59,20 @@ public:
 class MALListType : public MALIteratableContainerType
 {
 public:
+	virtual MALType* deepCopy() override;
+	virtual bool isEqualTo(MALType* other) override;
 	std::vector<MALType*> values;
 	virtual std::string to_string() override;
 	virtual MALType::Types type() const override { return  MALType::Types::List; }
 	virtual size_t size() override { return values.size(); };
 	virtual MALType* getAt(size_t pos) override { return values[pos]; };
 	virtual void setAt(size_t pos, MALType* value) { values[pos] = value; };
-	~MALListType() {
-		for (auto p = values.begin(); p != values.end(); p++) {
-			delete *p;
-		}
-	}
 };
 
 class MALNumberType : public MALAtomType {
 public:
+	virtual MALType* deepCopy() override;
+	virtual bool isEqualTo(MALType* other) override;
 	float value;
 	MALNumberType(float value) : value(value) {}
 	virtual std::string to_string() override;
@@ -78,14 +81,18 @@ public:
 
 class MALSymbolType : public MALAtomType {
 public:
+	virtual MALType* deepCopy() override;
+	virtual bool isEqualTo(MALType* other) override;
 	std::string name;
-	MALSymbolType(std::string& name) : name(name) {}
+	MALSymbolType(std::string name) : name(name) {}
 	virtual std::string to_string() override;
 	virtual MALType::Types type() const override { return  MALType::Types::Symbol; }
 };
 
 class MALStringType : public MALAtomType {
 public:
+	virtual MALType* deepCopy() override;
+	virtual bool isEqualTo(MALType* other) override;
 	std::string value;
 	MALStringType(std::string value) : value(value) {}
 	virtual std::string to_string() override;
@@ -94,12 +101,16 @@ public:
 
 class MALNilType : public MALAtomType {
 public:
+	virtual MALType* deepCopy() override;
+	virtual bool isEqualTo(MALType* other) override;
 	virtual std::string to_string() override;
 	virtual MALType::Types type() const override { return  MALType::Types::Nil; }
 };
 
 class MALBoolType : public MALAtomType {
 public:
+	virtual MALType* deepCopy() override;
+	virtual bool isEqualTo(MALType* other) override;
 	bool value;
 	MALBoolType(bool value) : value(value) {}
 	virtual std::string to_string() override;
@@ -108,6 +119,8 @@ public:
 
 class MalKeywordType : public MALAtomType {
 public:
+	virtual MALType* deepCopy() override;
+	virtual bool isEqualTo(MALType* other) override;
 	std::string value;
 	MalKeywordType(std::string value) : value(value) {}
 	virtual std::string to_string() override;
@@ -116,6 +129,8 @@ public:
 
 class MALVectorType : public MALIteratableContainerType {
 public:
+	virtual MALType* deepCopy() override;
+	virtual bool isEqualTo(MALType* other) override;
 	std::vector<MALType*> values;
 	virtual std::string to_string() override;
 	virtual MALType::Types type() const override { return  MALType::Types::Vector; }
@@ -124,22 +139,36 @@ public:
 	virtual void setAt(size_t pos, MALType* value) { values[pos] = value; };
 };
 
+struct MALTypeHash {
+	std::size_t operator()(MALType* const& key) const noexcept
+	{
+		return (size_t)key;
+	}
+};
+struct MALTypeEqualPred {
+	bool operator()(MALType* lhs, MALType* rhs) const
+	{
+		return lhs->isEqualTo(rhs);
+	}
+};
 class MALHashMapType : public MALContainerType {
 public:
-	std::map<MALType*, MALType*> values;
+	virtual MALType* deepCopy() override;
+	virtual bool isEqualTo(MALType* other) override;
+	std::unordered_map<MALType*, MALType*, MALTypeHash, MALTypeEqualPred> values;
 	virtual std::string to_string() override;
 	virtual MALType::Types type() const override { return  MALType::Types::HashMap; }
 	virtual size_t size() override { return values.size(); };
 };
 
 using MALFunctor = std::function<MALType* (std::vector<MALType*>)>;
-
 class MALFuncType : public MALAtomType {
 public:
+	virtual MALType* deepCopy() override;
+	virtual bool isEqualTo(MALType* other) override;
 	MALFuncType(std::string name, MALFunctor fn) : name(name), fn(fn) {}
 	std::string name;
 	MALFunctor fn;
 	virtual std::string to_string() override;
 	virtual MALType::Types type() const override { return  MALType::Types::Function; }
 };
-
