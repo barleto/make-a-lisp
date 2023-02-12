@@ -2,6 +2,10 @@
 
 void Env::set(MALSymbolType* symbol, MALType* malType)
 {
+    auto got = this->data.find(symbol);
+    if (got != this->data.end()) {
+        this->data.erase(symbol);
+    }
     this->data.insert(std::pair<MALSymbolType*, MALType*>(symbol, malType));
 }
 

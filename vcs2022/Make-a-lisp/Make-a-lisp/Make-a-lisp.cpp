@@ -70,19 +70,19 @@ MALType* handleSpecialForms(MALListType* astList, Env& env, MALSymbolType* looku
             throw std::runtime_error("ERROR: 'let*' need at least two params. Params found: '" + astList->to_string() + "'");
         }
         auto newEnv(env);
-        if (astList->values[1]->type() != MALType::Types::List) {
-            throw std::runtime_error("ERROR: 'let*' first param must be a list.");
+        if (!astList->values[1]->isIteratable()) {
+            throw std::runtime_error("ERROR: 'let*' binding list must be of type list or vector.");
         }
-        auto bindingList = (MALListType*)astList->values[1];
-        if (bindingList->values.size() % 2 != 0) {
+        auto bindingList = (MALIteratableContainerType*)astList->values[1];
+        if (bindingList->size() % 2 != 0) {
             throw std::runtime_error("ERROR: Mismatched number of elements in binding list: '"+ bindingList->to_string() + "'.");
         }
-        for (int i = 0; i < bindingList->values.size(); i += 2) {
-            if (bindingList->values[i]->type() != MALType::Types::Symbol) {
-                throw std::runtime_error("ERROR: First element in a binding pair must be a symbol. Found '" + bindingList->values[i]->to_string() + "' instead.");
+        for (int i = 0; i < bindingList->size(); i += 2) {
+            if (bindingList->getAt(i)->type() != MALType::Types::Symbol) {
+                throw std::runtime_error("ERROR: First element in a binding pair must be a symbol. Found '" + bindingList->getAt(i)->to_string() + "' instead.");
             }
-            auto symbol = (MALSymbolType*)bindingList->values[i];
-            auto evaledValue = EVAL(bindingList->values[i + 1], newEnv);
+            auto symbol = (MALSymbolType*)bindingList->getAt(i);
+            auto evaledValue = EVAL(bindingList->getAt(i + 1), newEnv);
             newEnv.set(symbol, evaledValue);
         }
         return EVAL(astList->values[2], newEnv);

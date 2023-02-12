@@ -28,6 +28,7 @@ public:
 	virtual std::string to_string() = 0;
 	virtual MALType::Types type() const = 0;
 	virtual const bool isCompound() const = 0;
+	virtual bool isIteratable() { return false; };
 }; 
 
 class MALAtomType : public MALType
@@ -36,18 +37,30 @@ public:
 	virtual const bool isCompound() const override { return false; };
 };
 
-class MALCompoundType : public MALType
+class MALContainerType : public MALType
 {
 public:
 	virtual const bool isCompound() const override { return true; };
+	virtual size_t size() = 0;
 };
 
-class MALListType : public MALCompoundType
+class MALIteratableContainerType : public MALContainerType
+{
+public:
+	virtual bool isIteratable() override { return true; };
+	virtual MALType* getAt(size_t pos) = 0;
+	virtual void setAt(size_t pos, MALType* value) = 0;
+};
+
+class MALListType : public MALIteratableContainerType
 {
 public:
 	std::vector<MALType*> values;
 	virtual std::string to_string() override;
 	virtual MALType::Types type() const override { return  MALType::Types::List; }
+	virtual size_t size() override { return values.size(); };
+	virtual MALType* getAt(size_t pos) override { return values[pos]; };
+	virtual void setAt(size_t pos, MALType* value) { values[pos] = value; };
 	~MALListType() {
 		for (auto p = values.begin(); p != values.end(); p++) {
 			delete *p;
@@ -101,18 +114,22 @@ public:
 	virtual MALType::Types type() const override { return  MALType::Types::Keyword; }
 };
 
-class MALVectorType : public MALCompoundType {
+class MALVectorType : public MALIteratableContainerType {
 public:
 	std::vector<MALType*> values;
 	virtual std::string to_string() override;
 	virtual MALType::Types type() const override { return  MALType::Types::Vector; }
+	virtual size_t size() override { return values.size(); };
+	virtual MALType* getAt(size_t pos) override { return values[pos]; };
+	virtual void setAt(size_t pos, MALType* value) { values[pos] = value; };
 };
 
-class MALHashMapType : public MALCompoundType {
+class MALHashMapType : public MALContainerType {
 public:
 	std::map<MALType*, MALType*> values;
 	virtual std::string to_string() override;
 	virtual MALType::Types type() const override { return  MALType::Types::HashMap; }
+	virtual size_t size() override { return values.size(); };
 };
 
 using MALFunctor = std::function<MALType* (std::vector<MALType*>)>;
