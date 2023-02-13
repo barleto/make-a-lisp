@@ -38,11 +38,11 @@ MALType* handleDefBang(MALListType* astList, Env* env)
 MALType* handleDo(MALListType* astList, Env* env)
 {
     //Evaluate all the elements of the list using eval and return the final evaluated element.
-    astList->values.erase(astList->values.begin());
-    for (int i = 0; i < astList->values.size(); i++) {
-        astList->values[i] = EVAL(astList->values[i], env);
+    MALType* lastValue = new MALNilType();
+    for (int i = 1; i < astList->values.size(); i++) {
+        lastValue = EVAL(astList->values[i], env);
     }
-    return astList->values[astList->values.size() - 1];
+    return lastValue;
 }
 
 MALType* handleIf(MALListType* astList, Env* env)
@@ -75,7 +75,7 @@ MALType* handleClosure(MALListType* astList, Env* env)
     - Call EVAL on the second parameter (third list element of ast from outer scope), using the new environment.
     Use the result as the return value of the closure.
     */
-    checkArgsIs("if", astList, 3, astList->values.size());
+    checkArgsIs("fn*", astList, 3, astList->values.size());
     if (astList->values[1]->type() != MALType::Types::List) {
         throw std::runtime_error("Error: First parameter of 'fn*' mus be a list. Found: " + astList->values[1]->to_string());
     }
@@ -89,7 +89,7 @@ MALType* handleClosure(MALListType* astList, Env* env)
     auto fnBody = astList->values[2];
     return new MALFuncType(astList->to_string(), (MALFunctor)[env, bindingsList, fnBody](std::vector<MALType*> args) -> MALType* {
         Env* newEnv = new Env(env, bindingsList, args);
-        auto result = EVAL(fnBody->deepCopy(), newEnv);
+        auto result = EVAL(fnBody, newEnv);
         //delete newEnv;
         return result;
     });

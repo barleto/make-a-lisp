@@ -25,19 +25,20 @@ MALType* eval_ast(MALType* ast, Env* env) {
     }
     case MALType::Types::List: {
         auto list = (MALListType*)ast;
+        auto newList = new MALListType();
         for (int i = 0; i < list->values.size(); i++) {
-            list->values[i] = (EVAL(list->values[i], env));
+            newList->values.push_back(EVAL(list->values[i], env));
         }
-        return list;
+        return newList;
         break;
     }
     case MALType::Types::Vector: {
         auto vector = (MALVectorType*)ast;
-        auto size = vector->values.size();
-        for (int i = 0; i < size; i++) {
-            vector->values[i] = (EVAL(vector->values[i], env));
+        auto newList = new MALVectorType();
+        for (int i = 0; i < vector->values.size(); i++) {
+            newList->values.push_back(EVAL(vector->values[i], env));
         }
-        return vector;
+        return newList;
         break;
     }
     case MALType::Types::HashMap: {
