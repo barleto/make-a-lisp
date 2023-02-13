@@ -11,5 +11,5 @@
 #include "Env.h"
 #include "assert.h"
 
-void addBuiltInOperationsToEnv(Env* env);
+void addBuiltInOperationsToEnv(EnvPtr env);
 

@@ -10,6 +10,7 @@
 
 #include "Type.h"
 
+#define EnvPtr std::shared_ptr<Env>
 struct SymbolHash {
 	std::size_t operator()(MALSymbolType* const& symbolKey) const noexcept
 	{
@@ -27,10 +28,10 @@ using EnvTable = std::unordered_map<MALSymbolType*, MALType*, SymbolHash, Symbol
 
 class Env {
 	EnvTable data;
-	Env* outer = nullptr;
+	EnvPtr outer = nullptr;
 public:
-	Env(Env* outer = nullptr);
-	Env(Env* outer, MALListType* bindings, std::vector<MALType*> exprs);
+	Env(EnvPtr outer = nullptr);
+	Env(EnvPtr outer, MALListType* bindings, std::vector<MALType*> exprs);
 	// takes a symbol key and a mal value and adds to the data structure
 	void set(MALSymbolType* symbol, MALType* funType);
 	/*takes a symbol key and if the current environment contains that key then return the environment. 

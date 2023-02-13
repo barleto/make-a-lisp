@@ -15,9 +15,9 @@ MALType* READ(std::string input) {
     return read_str(input);
 }
 
-MALType* EVAL(MALType* ast, Env* env);
+MALType* EVAL(MALType* ast, EnvPtr env);
 
-MALType* eval_ast(MALType* ast, Env* env) {
+MALType* eval_ast(MALType* ast, EnvPtr env) {
     switch (ast->type()) {
     case MALType::Types::Symbol: {
         auto symbol = (MALSymbolType*)ast;
@@ -55,7 +55,7 @@ MALType* eval_ast(MALType* ast, Env* env) {
     }
 }
 
-MALType* EVAL(MALType* ast, Env* env) {
+MALType* EVAL(MALType* ast, EnvPtr env) {
     if (ast->type() != MALType::Types::List) {
         return eval_ast(ast, env);
     }
@@ -86,7 +86,7 @@ std::string PRINT(std::string input) {
     return input;
 }
 
-std::string rep(std::string input, Env* env) {
+std::string rep(std::string input, EnvPtr env) {
     try {
         auto ast = READ(input);
         auto result = EVAL(ast, env);
@@ -102,7 +102,7 @@ int main() {
     linenoise::LoadHistory(history_path);
     std::string input;
 
-    auto env = new Env();
+    EnvPtr env(new Env());
     addBuiltInOperationsToEnv(env);
     rep("(def! not (fn* (a) (if a false true)))", env);
     for (;;) {

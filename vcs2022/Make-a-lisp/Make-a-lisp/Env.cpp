@@ -2,9 +2,9 @@
 
 auto listArgsSymbol = new MALSymbolType("&");
 
-Env::Env(Env* outer) : outer(outer) {}
+Env::Env(EnvPtr outer) : outer(outer) {}
 
-Env::Env(Env* outer, MALListType* bindings, std::vector<MALType*> exprs) : outer(outer)
+Env::Env(EnvPtr outer, MALListType* bindings, std::vector<MALType*> exprs) : outer(outer)
 {
     bool foundSpecialChar = false;
     int realBindingsSize = 0;

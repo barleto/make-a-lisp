@@ -140,7 +140,7 @@ std::map<std::string, MALFunctor> ns = {
     {"dlog", dlog},
 };
 
-void addBuiltInOperationsToEnv(Env* env)
+void addBuiltInOperationsToEnv(EnvPtr env)
 {
     for (auto p = ns.begin(); p != ns.end(); p++) {
         env->set(new MALSymbolType(p->first), new MALFuncType(p->first, p->second));

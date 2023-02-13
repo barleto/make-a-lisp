@@ -1,10 +1,10 @@
 #include "SpecFormHandler.h"
 #include "assert.h"
 
-MALType* handleLetStart(MALListType* astList, Env* env)
+MALType* handleLetStart(MALListType* astList, EnvPtr env)
 {
     checkArgsIsAtLeast("let*", astList, 3, astList->values.size());
-    Env* newEnv = new Env(env);
+    EnvPtr newEnv(new Env(env));
     if (!astList->values[1]->isIteratable()) {
         throw std::runtime_error("ERROR: 'let*' binding list must be of type list or vector.");
     }
@@ -23,7 +23,7 @@ MALType* handleLetStart(MALListType* astList, Env* env)
     return EVAL(astList->values[2], newEnv);
 }
 
-MALType* handleDefBang(MALListType* astList, Env* env)
+MALType* handleDefBang(MALListType* astList, EnvPtr env)
 {
     checkArgsIsAtLeast("def!", astList, 2, astList->values.size());
     if (astList->values[1]->type() != MALType::Types::Symbol) {
@@ -35,7 +35,7 @@ MALType* handleDefBang(MALListType* astList, Env* env)
     return evaledValue;
 }
 
-MALType* handleDo(MALListType* astList, Env* env)
+MALType* handleDo(MALListType* astList, EnvPtr env)
 {
     //Evaluate all the elements of the list using eval and return the final evaluated element.
     MALType* lastValue = new MALNilType();
@@ -45,7 +45,7 @@ MALType* handleDo(MALListType* astList, Env* env)
     return lastValue;
 }
 
-MALType* handleIf(MALListType* astList, Env* env)
+MALType* handleIf(MALListType* astList, EnvPtr env)
 {
     /*Evaluate the first parameter (second element). If the result (condition) is anything other than nil or false,
     then evaluate the second parameter (third element of the list) and return the result. Otherwise, evaluate the third
@@ -66,7 +66,7 @@ MALType* handleIf(MALListType* astList, Env* env)
 }
 
 
-MALType* handleClosure(MALListType* astList, Env* env)
+MALType* handleClosure(MALListType* astList, EnvPtr env)
 {
     /*Return a new function closure. The body of that closure does the following:
     - Create a new environment using env (closed over from outer scope) as the outer parameter,
@@ -88,14 +88,14 @@ MALType* handleClosure(MALListType* astList, Env* env)
     }
     auto fnBody = astList->values[2];
     return new MALFuncType(astList->to_string(), (MALFunctor)[env, bindingsList, fnBody](std::vector<MALType*> args) -> MALType* {
-        Env* newEnv = new Env(env, bindingsList, args);
+        EnvPtr newEnv(new Env(env, bindingsList, args));
         auto result = EVAL(fnBody, newEnv);
         //delete newEnv;
         return result;
     });
 }
 
-MALType* handleSpecialForms(MALListType* astList, Env* env, MALSymbolType* lookupSymbol) {
+MALType* handleSpecialForms(MALListType* astList, EnvPtr env, MALSymbolType* lookupSymbol) {
     if (lookupSymbol->name == "def!") {
         return handleDefBang(astList, env);
     }
