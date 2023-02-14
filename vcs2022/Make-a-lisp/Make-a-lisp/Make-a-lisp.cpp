@@ -11,21 +11,21 @@
 #include "SpecFormHandler.h"
 #include "core.h"
 
-MALType* READ(std::string input) { 
+MALTypePtr READ(std::string input) { 
     return read_str(input);
 }
 
-MALType* EVAL(MALType* ast, EnvPtr env);
+MALTypePtr EVAL(MALTypePtr ast, EnvPtr env);
 
-MALType* eval_ast(MALType* ast, EnvPtr env) {
+MALTypePtr eval_ast(MALTypePtr ast, EnvPtr env) {
     switch (ast->type()) {
     case MALType::Types::Symbol: {
-        auto symbol = (MALSymbolType*)ast;
+        auto symbol = std::dynamic_pointer_cast<MALSymbolType>(ast);
         return env->get(symbol);
     }
     case MALType::Types::List: {
-        auto list = (MALListType*)ast;
-        auto newList = new MALListType();
+        auto list = std::dynamic_pointer_cast<MALListType>(ast);
+        std::shared_ptr<MALListType> newList(new MALListType());
         for (int i = 0; i < list->values.size(); i++) {
             newList->values.push_back(EVAL(list->values[i], env));
         }
@@ -33,8 +33,8 @@ MALType* eval_ast(MALType* ast, EnvPtr env) {
         break;
     }
     case MALType::Types::Vector: {
-        auto vector = (MALVectorType*)ast;
-        auto newList = new MALVectorType();
+        auto vector = std::dynamic_pointer_cast<MALVectorType>(ast);
+        std::shared_ptr<MALVectorType> newList(new MALVectorType());
         for (int i = 0; i < vector->values.size(); i++) {
             newList->values.push_back(EVAL(vector->values[i], env));
         }
@@ -42,7 +42,7 @@ MALType* eval_ast(MALType* ast, EnvPtr env) {
         break;
     }
     case MALType::Types::HashMap: {
-        auto map = (MALHashMapType*)ast;
+        auto map = std::dynamic_pointer_cast<MALHashMapType>(ast);
         for (auto p = map->values.begin(); p != map->values.end(); p++) {
             map->values[p->first] = EVAL(p->second, env);
         }
@@ -55,24 +55,24 @@ MALType* eval_ast(MALType* ast, EnvPtr env) {
     }
 }
 
-MALType* EVAL(MALType* ast, EnvPtr env) {
+MALTypePtr EVAL(MALTypePtr ast, EnvPtr env) {
     if (ast->type() != MALType::Types::List) {
         return eval_ast(ast, env);
     }
-    auto list = (MALListType*)ast;
+    auto list = std::dynamic_pointer_cast<MALListType>(ast);
     if (list->values.size() == 0) {
         return ast;
     }
 
     if (list->values[0]->type() == MALType::Types::Symbol) {
-        MALType* result = handleSpecialForms(list, env, (MALSymbolType*)list->values[0]);
+        MALTypePtr result = handleSpecialForms(list, env, std::dynamic_pointer_cast<MALSymbolType>(list->values[0]));
         if (result != nullptr) {
             return result;
         }
     }
 
-    auto evalList = (MALListType*)eval_ast(list, env);
-    auto func = (MALFuncType*)evalList->values[0];
+    auto evalList = std::dynamic_pointer_cast<MALListType>(eval_ast(list, env));
+    auto func = std::dynamic_pointer_cast<MALFuncType>(evalList->values[0]);
     if (func->type() != MALType::Types::Function) {
         return ast;
     }

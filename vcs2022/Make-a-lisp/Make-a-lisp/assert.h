@@ -10,11 +10,11 @@
 #include "Type.h"
 #include "Env.h"
 
-void checkArgsIsAtLeast(std::string name, MALType* type, int correctValue, int argCount);
+void checkArgsIsAtLeast(std::string name, MALTypePtr type, int correctValue, int argCount);
 
 void checkArgsIsAtLeast(std::string name, int correctValue, int argCount);
 
-void checkArgsIs(std::string name, MALType* type, int correctValue, int argCount);
+void checkArgsIs(std::string name, MALTypePtr type, int correctValue, int argCount);
 
-void assertMalType(MALType* element, MALType::Types type);
+void assertMalType(MALTypePtr element, MALType::Types type);
 

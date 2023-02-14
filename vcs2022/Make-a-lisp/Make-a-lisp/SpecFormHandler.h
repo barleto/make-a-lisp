@@ -10,10 +10,10 @@
 #include "Type.h"
 #include "Env.h"
 
-MALType* EVAL(MALType* ast, EnvPtr env);
-MALType* eval_ast(MALType* ast, EnvPtr env);
+MALTypePtr EVAL(MALTypePtr ast, EnvPtr env);
+MALTypePtr eval_ast(MALTypePtr ast, EnvPtr env);
 
-MALType* handleSpecialForms(MALListType* astList, EnvPtr env, MALSymbolType* lookupSymbol);
+MALTypePtr handleSpecialForms(MALListTypePtr astList, EnvPtr env, MALSymbolTypePtr lookupSymbol);
 
-MALType* handleClosure(MALListType* astList, EnvPtr env);
+MALTypePtr handleClosure(MALListTypePtr astList, EnvPtr env);
 

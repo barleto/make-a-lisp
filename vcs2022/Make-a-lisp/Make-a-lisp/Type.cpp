@@ -38,8 +38,8 @@ std::string MALType::typeToString(Types t)
     }
 }
 
-MALType* MALListType::deepCopy() {
-    auto result = new MALListType();
+MALTypePtr MALListType::deepCopy() {
+    auto result = std::shared_ptr<MALListType>(new MALListType());
     for (auto p = this->values.begin(); p != this->values.end(); p++) {
         auto malType = *p;
         result->values.push_back(malType->deepCopy());
@@ -47,12 +47,12 @@ MALType* MALListType::deepCopy() {
     return result;
 }
 
-bool MALListType::isEqualTo(MALType* other)
+bool MALListType::isEqualTo(MALTypePtr other)
 {
     if (other->type() != this->type()) {
         return false;
     }
-    auto castOther = (MALListType*)other;
+    auto castOther = std::dynamic_pointer_cast<MALListType>(other);
     if (castOther->size() != this->size()) {
         return false;
     }
@@ -77,16 +77,16 @@ std::string MALListType::to_string()
     return "(" + result + ")";
 }
 
-MALType* MALNumberType::deepCopy() {
-    return new MALNumberType(this->value);
+MALTypePtr MALNumberType::deepCopy() {
+    return std::shared_ptr<MALNumberType>(new MALNumberType(this->value));
 }
 
-bool MALNumberType::isEqualTo(MALType* other)
+bool MALNumberType::isEqualTo(MALTypePtr other)
 {
     if (other->type() != this->type()) {
         return false;
     }
-    auto castOther = (MALNumberType*)other;
+    auto castOther = std::dynamic_pointer_cast<MALNumberType>(other);
     return castOther->value == this->value;
 }
 
@@ -95,16 +95,16 @@ std::string MALNumberType::to_string()
     return std::to_string(this->value);
 }
 
-MALType* MALSymbolType::deepCopy() {
-    return new MALSymbolType(this->name);
+MALTypePtr MALSymbolType::deepCopy() {
+    return std::shared_ptr<MALSymbolType>(new MALSymbolType(this->name));
 }
 
-bool MALSymbolType::isEqualTo(MALType* other)
+bool MALSymbolType::isEqualTo(MALTypePtr other)
 {
     if (other->type() != this->type()) {
         return false;
     }
-    auto castOther = (MALSymbolType*)other;
+    auto castOther = std::dynamic_pointer_cast<MALSymbolType>(other);
     return castOther->name == this->name;
 }
 
@@ -113,16 +113,16 @@ std::string MALSymbolType::to_string()
     return this->name;
 }
 
-MALType* MALStringType::deepCopy() {
-    return new MALStringType(this->value);
+MALTypePtr MALStringType::deepCopy() {
+    return std::shared_ptr<MALStringType>(new MALStringType(this->value));
 }
 
-bool MALStringType::isEqualTo(MALType* other)
+bool MALStringType::isEqualTo(MALTypePtr other)
 {
     if (other->type() != this->type()) {
         return false;
     }
-    auto castOther = (MALStringType*)other;
+    auto castOther = std::dynamic_pointer_cast<MALStringType>(other);
     return castOther->value == this->value;
 }
 
@@ -131,11 +131,11 @@ std::string MALStringType::to_string()
     return this->value;
 }
 
-MALType* MALNilType::deepCopy() {
-    return new MALNilType();
+MALTypePtr MALNilType::deepCopy() {
+    return std::shared_ptr<MALNilType>(new MALNilType());
 }
 
-bool MALNilType::isEqualTo(MALType* other)
+bool MALNilType::isEqualTo(MALTypePtr other)
 {
     return other->type() == this->type();
 }
@@ -145,16 +145,16 @@ std::string MALNilType::to_string()
     return "nil";
 }
 
-MALType* MALBoolType::deepCopy() {
-    return new MALBoolType(this->value);
+MALTypePtr MALBoolType::deepCopy() {
+    return std::shared_ptr<MALBoolType>(new MALBoolType(this->value));
 }
 
-bool MALBoolType::isEqualTo(MALType* other)
+bool MALBoolType::isEqualTo(MALTypePtr other)
 {
     if (other->type() != this->type()) {
         return false;
     }
-    auto castOther = (MALBoolType*)other;
+    auto castOther = std::dynamic_pointer_cast<MALBoolType>(other);
     return castOther->value == this->value;
 }
 
@@ -163,16 +163,16 @@ std::string MALBoolType::to_string()
     return this->value ? "true" : "false";
 }
 
-MALType* MalKeywordType::deepCopy() {
-    return new MalKeywordType(this->value);
+MALTypePtr MalKeywordType::deepCopy() {
+    return std::shared_ptr<MalKeywordType>(new MalKeywordType(this->value));
 }
 
-bool MalKeywordType::isEqualTo(MALType* other)
+bool MalKeywordType::isEqualTo(MALTypePtr other)
 {
     if (other->type() != this->type()) {
         return false;
     }
-    auto castOther = (MalKeywordType*)other;
+    auto castOther = std::dynamic_pointer_cast<MalKeywordType>(other);
     return castOther->value == this->value;
 }
 
@@ -181,8 +181,8 @@ std::string MalKeywordType::to_string()
     return ":" + this->value;
 }
 
-MALType* MALVectorType::deepCopy() {
-    auto result = new MALVectorType();
+MALTypePtr MALVectorType::deepCopy() {
+    auto result = std::shared_ptr<MALVectorType>(new MALVectorType());
     for (auto p = this->values.begin(); p != this->values.end(); p++) {
         auto malType = *p;
         result->values.push_back(malType->deepCopy());
@@ -190,12 +190,12 @@ MALType* MALVectorType::deepCopy() {
     return result;
 }
 
-bool MALVectorType::isEqualTo(MALType* other)
+bool MALVectorType::isEqualTo(MALTypePtr other)
 {
     if (other->type() != this->type()) {
         return false;
     }
-    auto castOther = (MALVectorType*)other;
+    auto castOther = std::dynamic_pointer_cast<MALVectorType>(other);
     if (castOther->size() != this->size()) {
         return false;
     }
@@ -220,27 +220,27 @@ std::string MALVectorType::to_string()
     return "[" + result + "]";
 }
 
-MALType* MALHashMapType::deepCopy() {
-    auto result = new MALHashMapType();
+MALTypePtr MALHashMapType::deepCopy() {
+    auto result = std::shared_ptr<MALHashMapType>(new MALHashMapType());
     for (auto p = this->values.begin(); p != this->values.end(); p++) {
         auto malType = *p;
-        result->values.insert(std::pair<MALType*, MALType*>(p->first->deepCopy(), p->second->deepCopy()));
+        result->values.insert(std::pair<MALTypePtr, MALTypePtr>(p->first->deepCopy(), p->second->deepCopy()));
     }
     return result;
 }
 
-bool MALHashMapType::isEqualTo(MALType* other)
+bool MALHashMapType::isEqualTo(MALTypePtr other)
 {
     if (other->type() != this->type()) {
         return false;
     }
-    auto castOther = (MALHashMapType*)other;
+    auto castOther = std::dynamic_pointer_cast<MALHashMapType>(other);
     if (castOther->size() != this->size()) {
         return false;
     }
     auto r = castOther->values.begin();
     for (auto p = this->values.begin(); p != this->values.end(); p++, r++) {
-        auto otherSymbol = (MALSymbolType*)r->first;
+        auto otherSymbol = std::dynamic_pointer_cast<MALType>(r->first);
         auto got = this->values.find(otherSymbol);
         //check if both have the same keys
         if (got == this->values.end()) {
@@ -270,17 +270,19 @@ std::string MALHashMapType::to_string()
     return "{" + result + "}";
 }
 
-MALType* MALFuncType::deepCopy() {
-    return new MALFuncType(this->name, this->fn);
+MALTypePtr MALFuncType::deepCopy() {
+    return std::shared_ptr<MALFuncType>(new MALFuncType(this->name, this->fn));
 }
 
-bool MALFuncType::isEqualTo(MALType* other)
+bool MALFuncType::isEqualTo(MALTypePtr other)
 {
     if (other->type() != this->type()) {
         return false;
     }
-    auto castOther = (MALFuncType*)other;
-    return other == this;
+    auto castOther = std::dynamic_pointer_cast<MALFuncType>(other);
+
+    //TODO TEST THIS:
+    return &(*other) == this;
 }
 
 std::string MALFuncType::to_string()

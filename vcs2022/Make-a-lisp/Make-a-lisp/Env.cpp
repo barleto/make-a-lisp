@@ -1,15 +1,15 @@
 #include "Env.h"
 
-auto listArgsSymbol = new MALSymbolType("&");
+std::shared_ptr<MALSymbolType> listArgsSymbol(new MALSymbolType("&"));
 
 Env::Env(EnvPtr outer) : outer(outer) {}
 
-Env::Env(EnvPtr outer, MALListType* bindings, std::vector<MALType*> exprs) : outer(outer)
+Env::Env(EnvPtr outer, MALListTypePtr bindings, std::vector<MALTypePtr> exprs) : outer(outer)
 {
     bool foundSpecialChar = false;
     int realBindingsSize = 0;
     for (int i = 0; i < bindings->size(); i++) {
-        auto symbol = (MALSymbolType*)bindings->values[i];
+        auto symbol = std::dynamic_pointer_cast<MALSymbolType>(bindings->values[i]);
         if (symbol->isEqualTo(listArgsSymbol)) {
             break;
         }
@@ -19,45 +19,45 @@ Env::Env(EnvPtr outer, MALListType* bindings, std::vector<MALType*> exprs) : out
         throw std::runtime_error("Error: Number of parameters don't match function's parameters list size.");
     }
     for (int i = 0; i < bindings->size(); i++) {
-        auto symbol = (MALSymbolType*)bindings->values[i];
+        auto symbol = std::dynamic_pointer_cast<MALSymbolType>(bindings->values[i]);
         if (symbol->isEqualTo(listArgsSymbol)) {
             if (i + 1 >= bindings->size()) {
                 throw std::runtime_error("Error: Missing binding name after special character '&'");
             }
-            auto argsList = new MALListType();
+            auto argsList = std::shared_ptr<MALListType>(new MALListType());
             for (int j = i; j < exprs.size(); j++) {
                 argsList->values.push_back(exprs[j]);
             }
-            auto argsListSym = (MALSymbolType*)bindings->values[i + 1];
+            auto argsListSym = std::dynamic_pointer_cast<MALSymbolType>(bindings->values[i + 1]);
             this->set(argsListSym, argsList);
             return;
         }
-        this->set((MALSymbolType*)bindings->values[i], exprs[i]);
+        this->set(std::dynamic_pointer_cast<MALSymbolType>(bindings->values[i]), exprs[i]);
     }
 }
 
-void Env::set(MALSymbolType* symbol, MALType* malType)
+void Env::set(MALSymbolTypePtr symbol, MALTypePtr malType)
 {
     auto got = this->data.find(symbol);
     if (got != this->data.end()) {
         this->data.erase(symbol);
     }
-    this->data.insert(std::pair<MALSymbolType*, MALType*>(symbol, malType));
+    this->data.insert(std::pair<MALSymbolTypePtr, MALTypePtr>(symbol, malType));
 }
 
-MALType* Env::find(MALSymbolType* symbol)
+MALTypePtr Env::find(MALSymbolTypePtr symbol)
 {
     auto got = this->data.find(symbol);
     if (got != this->data.end()) {
         return got->second;
     }
     if (this->outer == nullptr) {
-        return new MALNilType();
+        return std::shared_ptr<MALNilType>(new MALNilType());
     }
     return  this->outer->find(symbol);
 }
 
-MALType* Env::get(MALSymbolType* symbol)
+MALTypePtr Env::get(MALSymbolTypePtr symbol)
 {
     auto result = this->find(symbol);
     if (result->type() == MALType::Types::Nil) {

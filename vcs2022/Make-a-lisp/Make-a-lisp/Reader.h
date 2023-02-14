@@ -20,11 +20,11 @@ public:
 };
 
 
-MALType* read_str(std::string& input);
+MALTypePtr read_str(std::string& input);
 void tokenize(std::string& input, Reader& reader);
-MALType* read_form(Reader& reader);
-MALType* read_list(Reader& reader);
-MALType* read_vector(Reader& reader);
-MALType* read_map(Reader& reader);
-MALType* read_atom(Reader& reader);
-std::string pr_str(MALType* root);
+MALTypePtr read_form(Reader& reader);
+MALTypePtr read_list(Reader& reader);
+MALTypePtr read_vector(Reader& reader);
+MALTypePtr read_map(Reader& reader);
+MALTypePtr read_atom(Reader& reader);
+std::string pr_str(MALTypePtr root);

@@ -24,7 +24,7 @@ bool Reader::isEOF()
     return this->tokenIndex >= this->tokens.size();
 }
 
-MALType* read_str(std::string& input)
+MALTypePtr read_str(std::string& input)
 {
     auto reader = Reader();
     tokenize(input, reader);
@@ -46,10 +46,10 @@ void tokenize(std::string& input, Reader& reader)
     }
 }
 
-MALType* read_form(Reader& reader)
+MALTypePtr read_form(Reader& reader)
 {
     if (reader.tokens.size() <= 0) {
-        return new MALNilType();
+        return std::shared_ptr<MALNilType>(new MALNilType());
     }
     auto token = reader.peek();
     switch (token[0])
@@ -69,9 +69,9 @@ MALType* read_form(Reader& reader)
     }
 }
 
-MALType* read_list(Reader& reader)
+MALTypePtr read_list(Reader& reader)
 {
-    auto malList = new MALListType();
+    auto malList = std::shared_ptr<MALListType>(new MALListType());
     reader.next();
     for (;;) {
         Token token;
@@ -96,9 +96,9 @@ MALType* read_list(Reader& reader)
     return nullptr;
 }
 
-MALType* read_vector(Reader& reader)
+MALTypePtr read_vector(Reader& reader)
 {
-    auto malVector = new MALVectorType();
+    auto malVector = std::shared_ptr<MALVectorType>(new MALVectorType());
     reader.next();
     for (;;) {
         Token token;
@@ -123,26 +123,27 @@ MALType* read_vector(Reader& reader)
     return nullptr;
 }
 
-MALHashMapType* vectorToMalMap(std::vector<MALType*>& vector) {
-    if (vector.size() % 2 != 0) {
+std::shared_ptr<MALHashMapType> vectorToMalMap(std::vector<MALTypePtr>& hashMapInitializer) {
+    if (hashMapInitializer.size() % 2 != 0) {
         throw std::runtime_error("Error parsing: Odd number of keys. Mssing last value.");
     }
 
-    auto malMap = new MALHashMapType();
-    for (int i = 0; i < vector.size(); i += 2) {
-        if (vector[i]->isContainer()) {
+    auto malMap = std::shared_ptr<MALHashMapType>(new MALHashMapType());
+    for (int i = 0; i < hashMapInitializer.size(); i += 2) {
+        if (hashMapInitializer[i]->isContainer()) {
             throw std::runtime_error("Error parsing HashMap: Keys can't be of conpound type.");
         }
-        auto key = vector[i];
-        auto value = vector[i+1];
-        malMap->values.insert(std::pair<MALType*, MALType*>(key, value));
+        auto key = hashMapInitializer[i];
+        auto value = hashMapInitializer[i+1];
+        malMap->values.erase(key);
+        malMap->values.insert(std::pair<MALTypePtr, MALTypePtr>(key, value));
     }
     return malMap;
 }
 
-MALType* read_map(Reader& reader)
+MALTypePtr read_map(Reader& reader)
 {
-    auto malVector = new MALVectorType();
+    auto malVector = std::shared_ptr<MALVectorType>(new MALVectorType());
     reader.next();
     for (;;) {
         Token token;
@@ -167,36 +168,36 @@ MALType* read_map(Reader& reader)
     return nullptr;
 }
 
-MALType* read_atom(Reader& reader)
+MALTypePtr read_atom(Reader& reader)
 {
     auto token = reader.next();
 
     std::regex intRegex("^[0-9]+$", std::regex_constants::ECMAScript);
     if (std::regex_search(token, intRegex)) {
-        return new MALNumberType(stoi(token));
+        return std::shared_ptr<MALNumberType>(new MALNumberType(stoi(token)));
     }
     else if (token[0] == '"') {
-        return new MALStringType(token);
+        return std::shared_ptr<MALStringType>(new MALStringType(token));
     }
     else if (token[0] == ':') {
-        return new MalKeywordType(token.substr(1));
+        return std::shared_ptr<MalKeywordType>(new MalKeywordType(token.substr(1)));
     }
     else if (token == "true") {
-        return new MALBoolType(true);
+        return std::shared_ptr<MALBoolType>(new MALBoolType(true));
     }
     else if (token == "false") {
-        return new MALBoolType(false);
+        return std::shared_ptr<MALBoolType>(new MALBoolType(false));
     }
     else if (token == "nil") {
-        return new MALNilType();
+        return std::shared_ptr<MALNilType>(new MALNilType());
     }
     else {
-        return new MALSymbolType(token);
+        return std::shared_ptr<MALSymbolType>(new MALSymbolType(token));
     }
     return nullptr;
 }
 
-std::string pr_str(MALType* malType)
+std::string pr_str(MALTypePtr malType)
 {
     return malType->to_string();
 }
