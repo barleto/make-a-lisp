@@ -92,7 +92,11 @@ bool MALNumberType::isEqualTo(MALTypePtr other)
 
 std::string MALNumberType::to_string()
 {
-    return std::to_string(this->value);
+    auto dec = abs(this->value) - abs(floor(this->value));
+    if (dec != 0) {
+        return std::to_string(this->value);
+    }
+    return std::to_string((int)this->value);
 }
 
 MALTypePtr MALSymbolType::deepCopy() {

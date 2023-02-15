@@ -11,7 +11,7 @@
 #include "SpecFormHandler.h"
 #include "core.h"
 
-MALTypePtr READ(std::string input) { 
+MALTypePtr READ(std::string input) {
     return read_str(input);
 }
 
@@ -56,44 +56,59 @@ MALTypePtr eval_ast(MALTypePtr ast, EnvPtr env) {
 }
 
 MALTypePtr EVAL(MALTypePtr ast, EnvPtr env) {
-    if (ast->type() != MALType::Types::List) {
-        return eval_ast(ast, env);
-    }
-    auto list = std::dynamic_pointer_cast<MALListType>(ast);
-    if (list->values.size() == 0) {
-        return ast;
-    }
-
-    if (list->values[0]->type() == MALType::Types::Symbol) {
-        std::shared_ptr<SpecFormResult> result = handleSpecialForms(list, env, std::dynamic_pointer_cast<MALSymbolType>(list->values[0])); 
-        if (result->value != nullptr) {
-            return result->value;
+    EnvPtr currentEnv = env;
+    MALTypePtr currentAst = ast;
+    for (;;) {
+        if (currentAst->type() != MALType::Types::List) {
+            return eval_ast(currentAst, currentEnv);
         }
-    }
+        auto list = std::dynamic_pointer_cast<MALListType>(currentAst);
+        if (list->values.size() == 0) {
+            return currentAst;
+        }
 
-    auto evalList = std::dynamic_pointer_cast<MALListType>(eval_ast(list, env));
-    auto func = std::dynamic_pointer_cast<MALFuncType>(evalList->values[0]);
-    if (func->type() != MALType::Types::Function) {
-        return ast;
-    }
+        if (list->values[0]->type() == MALType::Types::Symbol) {
+            std::shared_ptr<HandleSpecialFormResult> result = handleSpecialForms(list, currentEnv);
+            if (result->tco) {
+                currentEnv = result->env;
+                currentAst = result->ast;
+                continue;
+            }
+            if (result->ast != nullptr) {
+                return result->ast;
+            }
+        }
 
-    auto args = evalList->values;
-    args.erase(args.begin());
-    return func->fn(args);
+        auto evalList = std::dynamic_pointer_cast<MALListType>(eval_ast(list, currentEnv));
+        if (evalList->values[0]->type() != MALType::Types::Function) {
+            throw std::runtime_error("Error: function not found for: '" + evalList->values[0]->to_string() + "'");
+        }
+        auto func = std::dynamic_pointer_cast<MALFuncType>(evalList->values[0]);
+        if (func->type() != MALType::Types::Function) {
+            return currentAst;
+        }
+
+        auto args = evalList->values;
+        args.erase(args.begin());
+        return func->fn(args);
+    }
 }
 
-std::string PRINT(std::string input) { 
-    return input;
+void PRINT(MALTypePtr result) {
+    if (result->type() == MALType::Types::Nil) {
+        return;
+    }
+    std::cout << pr_str(result) << std::endl;
 }
 
-std::string rep(std::string input, EnvPtr env) {
+void rep(std::string input, EnvPtr env) {
     try {
         auto ast = READ(input);
         auto result = EVAL(ast, env);
-        return PRINT(pr_str(result));
+        PRINT(result);
     }
     catch (std::runtime_error& e) {
-        return e.what();
+        std::cout << e.what() << std::endl;
     }
 }
 
@@ -111,9 +126,8 @@ int main() {
             break;
         linenoise::AddHistory(input.c_str());
         linenoise::SaveHistory(history_path);
-        std::cout << rep(input, env) << std::endl;
+        rep(input, env);
     }
-
 
     return 0;
 }

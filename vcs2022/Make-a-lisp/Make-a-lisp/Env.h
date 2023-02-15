@@ -43,7 +43,8 @@ public:
 	std::string dataToString();
 };
 
-struct SpecFormResult {
+struct HandleSpecialFormResult {
+	bool tco; //tail call optimisation flag
 	EnvPtr env;
-	MALTypePtr value;
+	MALTypePtr ast;
 };

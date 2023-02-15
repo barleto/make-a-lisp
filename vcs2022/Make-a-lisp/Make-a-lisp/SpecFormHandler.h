@@ -13,6 +13,6 @@
 MALTypePtr EVAL(MALTypePtr ast, EnvPtr env);
 MALTypePtr eval_ast(MALTypePtr ast, EnvPtr env);
 
-std::shared_ptr<SpecFormResult> handleSpecialForms(MALListTypePtr astList, EnvPtr env, MALSymbolTypePtr lookupSymbol);
+std::shared_ptr<HandleSpecialFormResult> handleSpecialForms(MALListTypePtr astList, EnvPtr env);
 
 
