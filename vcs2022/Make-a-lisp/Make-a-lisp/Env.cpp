@@ -52,7 +52,7 @@ MALTypePtr Env::find(MALSymbolTypePtr symbol)
         return got->second;
     }
     if (this->outer == nullptr) {
-        return std::shared_ptr<MALNilType>(new MALNilType());
+        return nullptr;
     }
     return  this->outer->find(symbol);
 }
@@ -60,7 +60,7 @@ MALTypePtr Env::find(MALSymbolTypePtr symbol)
 MALTypePtr Env::get(MALSymbolTypePtr symbol)
 {
     auto result = this->find(symbol);
-    if (result->type() == MALType::Types::Nil) {
+    if (result == nullptr) {
         throw std::runtime_error("ERROR: Env lookup: Symbol definition for '" + symbol->name + "' was not found.");
     }
     return result;

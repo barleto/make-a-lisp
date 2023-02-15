@@ -65,9 +65,9 @@ MALTypePtr EVAL(MALTypePtr ast, EnvPtr env) {
     }
 
     if (list->values[0]->type() == MALType::Types::Symbol) {
-        MALTypePtr result = handleSpecialForms(list, env, std::dynamic_pointer_cast<MALSymbolType>(list->values[0]));
-        if (result != nullptr) {
-            return result;
+        std::shared_ptr<SpecFormResult> result = handleSpecialForms(list, env, std::dynamic_pointer_cast<MALSymbolType>(list->values[0])); 
+        if (result->value != nullptr) {
+            return result->value;
         }
     }
 

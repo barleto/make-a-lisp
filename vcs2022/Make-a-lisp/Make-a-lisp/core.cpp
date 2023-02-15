@@ -138,6 +138,7 @@ std::map<std::string, MALFunctor> ns = {
     {"*", mult},
     {"/", divs},
     {"print", print},
+    {"prn", print},
     {"println", println},
     {"list", list},
     {"list?", isList},

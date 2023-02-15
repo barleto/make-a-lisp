@@ -42,3 +42,8 @@ public:
 	MALTypePtr get(MALSymbolTypePtr symbol);
 	std::string dataToString();
 };
+
+struct SpecFormResult {
+	EnvPtr env;
+	MALTypePtr value;
+};

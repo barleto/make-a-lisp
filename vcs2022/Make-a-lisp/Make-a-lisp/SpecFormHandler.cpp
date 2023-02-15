@@ -1,7 +1,7 @@
 #include "SpecFormHandler.h"
 #include "assert.h"
 
-MALTypePtr handleLetStart(MALListTypePtr astList, EnvPtr env)
+std::shared_ptr<SpecFormResult> handleLetStart(MALListTypePtr astList, EnvPtr env)
 {
     checkArgsIsAtLeast("let*", astList, 3, astList->values.size());
     EnvPtr newEnv(new Env(env));
@@ -20,10 +20,12 @@ MALTypePtr handleLetStart(MALListTypePtr astList, EnvPtr env)
         auto evaledValue = EVAL(bindingList->getAt(i + 1), newEnv);
         newEnv->set(symbol, evaledValue);
     }
-    return EVAL(astList->values[2], newEnv);
+    auto sfr = new SpecFormResult{ env, EVAL(astList->values[2], newEnv) };
+    std::shared_ptr<SpecFormResult> result(sfr);
+    return result;
 }
 
-MALTypePtr handleDefBang(MALListTypePtr astList, EnvPtr env)
+std::shared_ptr<SpecFormResult> handleDefBang(MALListTypePtr astList, EnvPtr env)
 {
     checkArgsIsAtLeast("def!", astList, 2, astList->values.size());
     if (astList->values[1]->type() != MALType::Types::Symbol) {
@@ -32,41 +34,53 @@ MALTypePtr handleDefBang(MALListTypePtr astList, EnvPtr env)
     auto symbol = std::dynamic_pointer_cast<MALSymbolType>(astList->values[1]);
     auto evaledValue = EVAL(astList->values[2], env);
     env->set(symbol, evaledValue);
-    return evaledValue;
+
+    auto sfr = new SpecFormResult{ env, evaledValue };
+    std::shared_ptr<SpecFormResult> result(sfr);
+    return result;
 }
 
-MALTypePtr handleDo(MALListTypePtr astList, EnvPtr env)
+std::shared_ptr<SpecFormResult> handleDo(MALListTypePtr astList, EnvPtr env)
 {
     //Evaluate all the elements of the list using eval and return the final evaluated element.
     MALTypePtr lastValue(new MALNilType());
     for (int i = 1; i < astList->values.size(); i++) {
         lastValue = EVAL(astList->values[i], env);
     }
-    return lastValue;
+
+    auto sfr = new SpecFormResult{ env, lastValue };
+    std::shared_ptr<SpecFormResult> result(sfr);
+    return result;
 }
 
-MALTypePtr handleIf(MALListTypePtr astList, EnvPtr env)
+std::shared_ptr<SpecFormResult> handleIf(MALListTypePtr astList, EnvPtr env)
 {
     /*Evaluate the first parameter (second element). If the result (condition) is anything other than nil or false,
     then evaluate the second parameter (third element of the list) and return the result. Otherwise, evaluate the third
     parameter (fourth element) and return the result. If condition is false and there is no third parameter,
     then just return nil.*/
     checkArgsIsAtLeast("if", astList, 3, astList->values.size());
-    auto result = EVAL(astList->values[1], env);
-    auto conditionResultType = result->type();
+    auto conditionResult = EVAL(astList->values[1], env);
+    auto conditionResultType = conditionResult->type();
     auto isTypeNil = conditionResultType == MALType::Types::Nil;
-    auto isTypeFalse = conditionResultType == MALType::Types::Bool && !(std::dynamic_pointer_cast<MALBoolType>(result)->value);
+    auto isTypeFalse = conditionResultType == MALType::Types::Bool && !(std::dynamic_pointer_cast<MALBoolType>(conditionResult)->value);
     if (!isTypeNil && !isTypeFalse) {
-        return EVAL(astList->values[2], env);
+        auto sfr = new SpecFormResult{ env, EVAL(astList->values[2], env) };
+        std::shared_ptr<SpecFormResult> result(sfr);
+        return result;
     }
     if (astList->values.size() <= 3) {
-        return MALTypePtr(new MALNilType());
+        auto sfr = new SpecFormResult{ env, MALTypePtr(new MALNilType()) };
+        std::shared_ptr<SpecFormResult> result(sfr);
+        return result;
     }
-    return EVAL(astList->values[3], env);
+    auto sfr = new SpecFormResult{ env, EVAL(astList->values[3], env) };
+    std::shared_ptr<SpecFormResult> result(sfr);
+    return result;
 }
 
 
-MALTypePtr handleClosure(MALListTypePtr astList, EnvPtr env)
+std::shared_ptr<SpecFormResult> handleClosure(MALListTypePtr astList, EnvPtr env)
 {
     /*Return a new function closure. The body of that closure does the following:
     - Create a new environment using env (closed over from outer scope) as the outer parameter,
@@ -86,7 +100,7 @@ MALTypePtr handleClosure(MALListTypePtr astList, EnvPtr env)
             throw std::runtime_error("ERROR: All elements of the binding list of 'fn*' must be symbols. Found: " + element->to_string());
         }
     }
-    
+
     auto funcBody = astList->values[2];
     auto lambda = (MALFunctor)[env, bindingsList, funcBody](std::vector<MALTypePtr> args) -> MALTypePtr {
         EnvPtr newEnv(new Env(env, bindingsList, args));
@@ -94,10 +108,13 @@ MALTypePtr handleClosure(MALListTypePtr astList, EnvPtr env)
         //delete newEnv;
         return result;
     };
-    return std::shared_ptr<MALFuncType>(new MALFuncType(astList->to_string(), lambda));
+
+    auto sfr = new SpecFormResult{ env, std::shared_ptr<MALFuncType>(new MALFuncType(astList->to_string(), lambda)) };
+    std::shared_ptr<SpecFormResult> result(sfr);
+    return result;
 }
 
-MALTypePtr handleSpecialForms(MALListTypePtr astList, EnvPtr env, MALSymbolTypePtr lookupSymbol) {
+std::shared_ptr<SpecFormResult> handleSpecialForms(MALListTypePtr astList, EnvPtr env, MALSymbolTypePtr lookupSymbol) {
     if (lookupSymbol->name == "def!") {
         return handleDefBang(astList, env);
     }
@@ -113,5 +130,7 @@ MALTypePtr handleSpecialForms(MALListTypePtr astList, EnvPtr env, MALSymbolTypeP
     else if (lookupSymbol->name == "fn*") {
         return handleClosure(astList, env);
     }
-    return nullptr;
+    auto sfr = new SpecFormResult{ env, nullptr };
+    std::shared_ptr<SpecFormResult> result(sfr);
+    return result;
 }
