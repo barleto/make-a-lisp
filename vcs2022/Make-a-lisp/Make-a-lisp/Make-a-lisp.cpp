@@ -146,6 +146,16 @@ void installBuiltInOps(EnvPtr env)
         (eval (read-string (str \"(do \" (slurp filename) \"\nnil)\")))))", env);
 }
 
+void installBuiltInSymbols(EnvPtr env, int argc, char* argv[])
+{
+    MALListTypePtr astList(new MALListType());
+    env->set(std::shared_ptr<MALSymbolType>(new MALSymbolType("*ARGV*")), astList);
+    for (int i = 0; i < argc; i++) {
+        astList->values.push_back(std::shared_ptr<MALStringType>(new MALStringType(std::string(argv[i]))));
+    }
+}
+
+
 void REPL(std::string& input, const char* const& history_path)
 {
     for (;;) {
@@ -167,6 +177,7 @@ int main(int argc, char* argv[]) {
     std::string input;
 
     installBuiltInOps(replEnv);
+    installBuiltInSymbols(replEnv, argc, argv);
 
     if (argc >= 2) {
         std::string fileName(argv[1]);
