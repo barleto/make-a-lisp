@@ -49,7 +49,7 @@ std::shared_ptr<HandleSpecialFormResult> handleDo(MALListTypePtr astList, EnvPtr
     }
     //Evaluate all the elements of the list using eval and return the final evaluated element.
     for (int i = 1; i < astList->values.size() - 1; i++) {
-        eval_ast(astList->values[i], env);
+        EVAL(astList->values[i], env);
     }
     MALTypePtr lastValue(astList->values.size() > 0 ? astList->values[astList->values.size() - 1] : std::shared_ptr<MALType>(new MALNilType()));
 
@@ -106,15 +106,20 @@ std::shared_ptr<HandleSpecialFormResult> handleClosure(MALListTypePtr astList, E
         }
     }
 
-    auto funcBody = astList->values[2];
-    auto lambda = (MALFunctor)[env, bindingsList, funcBody](std::vector<MALTypePtr> args) -> MALTypePtr {
+    auto funcBody = astList->values[2]; //also called AST
+    /*auto lambda = (MALFunctor)[env, bindingsList, funcBody](std::vector<MALTypePtr> args) -> MALTypePtr {
         EnvPtr newEnv(new Env(env, bindingsList, args));
         auto result = EVAL(funcBody, newEnv);
-        //delete newEnv;
         return result;
-    };
+    };*/
+    auto func = std::shared_ptr<MALFuncType>(new MALFuncType(
+        astList->to_string(),
+        env,
+        bindingsList,
+        funcBody
+    ));
 
-    auto sfr = new HandleSpecialFormResult{ false, env, std::shared_ptr<MALFuncType>(new MALFuncType(astList->to_string(), lambda)) };
+    auto sfr = new HandleSpecialFormResult{ false, env, func };
     std::shared_ptr<HandleSpecialFormResult> result(sfr);
     return result;
 }

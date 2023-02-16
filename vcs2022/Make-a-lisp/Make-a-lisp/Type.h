@@ -13,12 +13,14 @@
 #define MALListTypePtr std::shared_ptr<MALListType>
 #define MALSymbolTypePtr std::shared_ptr<MALSymbolType>
 
+class Env;
+
 class MALType
 {
 public:
 	enum Types {
 		List,
-		Float,
+		Number,
 		Symbol,
 		String,
 		Bool,
@@ -77,10 +79,10 @@ class MALNumberType : public MALAtomType {
 public:
 	virtual MALTypePtr deepCopy() override;
 	virtual bool isEqualTo(MALTypePtr other) override;
-	float value;
-	MALNumberType(float value) : value(value) {}
+	double value;
+	MALNumberType(double value) : value(value) {}
 	virtual std::string to_string() override;
-	virtual MALType::Types type() const override { return  MALType::Types::Float; }
+	virtual MALType::Types type() const override { return  MALType::Types::Number; }
 };
 
 class MALSymbolType : public MALAtomType {
@@ -166,13 +168,35 @@ public:
 };
 
 using MALFunctor = std::function<MALTypePtr (std::vector<MALTypePtr>)>;
-class MALFuncType : public MALAtomType {
+
+class MALCallableType : public MALAtomType {
+public:
+	virtual bool isBuiltin() = 0;
+	virtual MALType::Types type() const override { return  MALType::Types::Function; }
+	std::string name;
+	MALCallableType(std::string name) : name(name) {}
+};
+
+class MALFuncType : public MALCallableType {
 public:
 	virtual MALTypePtr deepCopy() override;
 	virtual bool isEqualTo(MALTypePtr other) override;
-	MALFuncType(std::string name, MALFunctor fn) : name(name), fn(fn) {}
-	std::string name;
-	MALFunctor fn;
+	MALFuncType(std::string name, std::shared_ptr<Env> env, MALListTypePtr bindingsList, MALTypePtr funcBody) 
+		: MALCallableType(name), env(env), bindingsList(bindingsList), funcBody(funcBody) {}
 	virtual std::string to_string() override;
-	virtual MALType::Types type() const override { return  MALType::Types::Function; }
+	virtual bool isBuiltin() override { return false; };
+	std::shared_ptr<Env> env;
+	MALListTypePtr bindingsList;
+	MALTypePtr funcBody;
 };
+
+class MALBuiltinFuncType : public MALCallableType {
+public:
+	virtual MALTypePtr deepCopy() override;
+	virtual bool isEqualTo(MALTypePtr other) override;
+	MALFunctor fn;
+	MALBuiltinFuncType(std::string name, MALFunctor fn) : MALCallableType(name), fn(fn) {}
+	virtual std::string to_string() override;
+	virtual bool isBuiltin() override { return true; };
+};
+

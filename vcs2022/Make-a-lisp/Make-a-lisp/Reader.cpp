@@ -172,12 +172,13 @@ MALTypePtr read_atom(Reader& reader)
 {
     auto token = reader.next();
 
-    std::regex intRegex("^[0-9]+$", std::regex_constants::ECMAScript);
+    std::regex intRegex("^[-]?[0-9]+(.[0-9]+)?$", std::regex_constants::ECMAScript);
     if (std::regex_search(token, intRegex)) {
-        return std::shared_ptr<MALNumberType>(new MALNumberType(stoi(token)));
+        return std::shared_ptr<MALNumberType>(new MALNumberType(stod(token)));
     }
     else if (token[0] == '"') {
-        return std::shared_ptr<MALStringType>(new MALStringType(token));
+
+        return std::shared_ptr<MALStringType>(new MALStringType(token.substr(1, token.size() - 2)));
     }
     else if (token[0] == ':') {
         return std::shared_ptr<MalKeywordType>(new MalKeywordType(token.substr(1)));

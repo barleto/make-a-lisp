@@ -6,7 +6,7 @@ std::string MALType::typeToString(Types t)
     case Types::List: {
         return "List";
     }
-    case Types::Float: {
+    case Types::Number: {
         return "Number";
     }
     case Types::Symbol: {
@@ -275,7 +275,7 @@ std::string MALHashMapType::to_string()
 }
 
 MALTypePtr MALFuncType::deepCopy() {
-    return std::shared_ptr<MALFuncType>(new MALFuncType(this->name, this->fn));
+    return std::shared_ptr<MALFuncType>(new MALFuncType(this->name, this->env, this->bindingsList, this->funcBody));
 }
 
 bool MALFuncType::isEqualTo(MALTypePtr other)
@@ -285,11 +285,30 @@ bool MALFuncType::isEqualTo(MALTypePtr other)
     }
     auto castOther = std::dynamic_pointer_cast<MALFuncType>(other);
 
-    //TODO TEST THIS:
     return &(*other) == this;
 }
 
 std::string MALFuncType::to_string()
 {
     return "<function:" + this->name + ">";
+}
+
+MALTypePtr MALBuiltinFuncType::deepCopy()
+{
+    return std::shared_ptr<MALBuiltinFuncType>(new MALBuiltinFuncType(this->name, this->fn));
+}
+
+bool MALBuiltinFuncType::isEqualTo(MALTypePtr other)
+{
+    if (other->type() != this->type()) {
+        return false;
+    }
+    auto castOther = std::dynamic_pointer_cast<MALBuiltinFuncType>(other);
+
+    return &(*other) == this;
+}
+
+std::string MALBuiltinFuncType::to_string()
+{
+    return "<builtin:" + this->name + ">";
 }

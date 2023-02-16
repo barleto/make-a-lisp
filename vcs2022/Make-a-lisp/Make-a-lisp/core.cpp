@@ -1,7 +1,8 @@
 #include "core.h"
 MALTypePtr add(std::vector<MALTypePtr> args) {
-    float result = 0;
+    double result = 0;
     for (auto p = args.begin(); p != args.end(); p++) {
+        assertMalType(*p, MALType::Types::Number);
         auto number = std::dynamic_pointer_cast<MALNumberType>(*p);
         result += number->value;
     }
@@ -9,8 +10,9 @@ MALTypePtr add(std::vector<MALTypePtr> args) {
 }
 
 MALTypePtr sub(std::vector<MALTypePtr> args) {
-    float result = args.size() > 0 ? (std::dynamic_pointer_cast<MALNumberType>(args[0]))->value : 0;
+    double result = args.size() > 0 ? (std::dynamic_pointer_cast<MALNumberType>(args[0]))->value : 0;
     for (auto p = args.begin() + 1; p != args.end(); p++) {
+        assertMalType(*p, MALType::Types::Number);
         auto number = std::dynamic_pointer_cast<MALNumberType>(*p);
         result -= number->value;
     }
@@ -18,8 +20,9 @@ MALTypePtr sub(std::vector<MALTypePtr> args) {
 }
 
 MALTypePtr mult(std::vector<MALTypePtr> args) {
-    float result = 1;
+    double result = 1;
     for (auto p = args.begin(); p != args.end(); p++) {
+        assertMalType(*p, MALType::Types::Number);
         auto number = std::dynamic_pointer_cast<MALNumberType>(*p);
         result *= number->value;
     }
@@ -27,8 +30,9 @@ MALTypePtr mult(std::vector<MALTypePtr> args) {
 }
 
 MALTypePtr divs(std::vector<MALTypePtr> args) {
-    float result = args.size() > 0 ? (std::dynamic_pointer_cast<MALNumberType>(args[0]))->value : 0;
+    double result = args.size() > 0 ? (std::dynamic_pointer_cast<MALNumberType>(args[0]))->value : 0;
     for (auto p = args.begin() + 1; p != args.end(); p++) {
+        assertMalType(*p, MALType::Types::Number);
         auto number = std::dynamic_pointer_cast<MALNumberType>(*p);
         result /= number->value;
     }
@@ -91,8 +95,8 @@ MALTypePtr eq(std::vector<MALTypePtr> args) {
 
 MALTypePtr lt(std::vector<MALTypePtr> args) {
     checkArgsIsAtLeast("<", 2, args.size());
-    assertMalType(args[0], MALType::Types::Float);
-    assertMalType(args[1], MALType::Types::Float);
+    assertMalType(args[0], MALType::Types::Number);
+    assertMalType(args[1], MALType::Types::Number);
     auto l = std::dynamic_pointer_cast<MALNumberType>(args[0]);
     auto r = std::dynamic_pointer_cast<MALNumberType>(args[1]);
     return std::shared_ptr<MALBoolType>(new MALBoolType(l->value < r->value));
@@ -100,8 +104,8 @@ MALTypePtr lt(std::vector<MALTypePtr> args) {
 
 MALTypePtr lte(std::vector<MALTypePtr> args) {
     checkArgsIsAtLeast("<=", 2, args.size());
-    assertMalType(args[0], MALType::Types::Float);
-    assertMalType(args[1], MALType::Types::Float);
+    assertMalType(args[0], MALType::Types::Number);
+    assertMalType(args[1], MALType::Types::Number);
     auto l = std::dynamic_pointer_cast<MALNumberType>(args[0]);
     auto r = std::dynamic_pointer_cast<MALNumberType>(args[1]);
     return std::shared_ptr<MALBoolType>(new MALBoolType(l->value <= r->value));
@@ -109,8 +113,8 @@ MALTypePtr lte(std::vector<MALTypePtr> args) {
 
 MALTypePtr gt(std::vector<MALTypePtr> args) {
     checkArgsIsAtLeast(">", 2, args.size());
-    assertMalType(args[0], MALType::Types::Float);
-    assertMalType(args[1], MALType::Types::Float);
+    assertMalType(args[0], MALType::Types::Number);
+    assertMalType(args[1], MALType::Types::Number);
     auto l = std::dynamic_pointer_cast<MALNumberType>(args[0]);
     auto r = std::dynamic_pointer_cast<MALNumberType>(args[1]);
     return std::shared_ptr<MALBoolType>(new MALBoolType(l->value > r->value));
@@ -118,8 +122,8 @@ MALTypePtr gt(std::vector<MALTypePtr> args) {
 
 MALTypePtr gte(std::vector<MALTypePtr> args) {
     checkArgsIsAtLeast(">=", 2, args.size());
-    assertMalType(args[0], MALType::Types::Float);
-    assertMalType(args[1], MALType::Types::Float);
+    assertMalType(args[0], MALType::Types::Number);
+    assertMalType(args[1], MALType::Types::Number);
     auto l = std::dynamic_pointer_cast<MALNumberType>(args[0]);
     auto r = std::dynamic_pointer_cast<MALNumberType>(args[1]);
     return std::shared_ptr<MALBoolType>(new MALBoolType(l->value >= r->value));
@@ -156,6 +160,6 @@ std::map<std::string, MALFunctor> ns = {
 void addBuiltInOperationsToEnv(EnvPtr env)
 {
     for (auto p = ns.begin(); p != ns.end(); p++) {
-        env->set(std::shared_ptr<MALSymbolType>(new MALSymbolType(p->first)), std::shared_ptr<MALFuncType>(new MALFuncType(p->first, p->second)));
+        env->set(std::shared_ptr<MALSymbolType>(new MALSymbolType(p->first)), std::shared_ptr<MALBuiltinFuncType>(new MALBuiltinFuncType(p->first, p->second)));
     }
 }

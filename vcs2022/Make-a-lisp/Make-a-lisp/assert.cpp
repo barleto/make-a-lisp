@@ -21,6 +21,6 @@ void checkArgsIs(std::string name, MALTypePtr type, int correctValue, int argCou
 void assertMalType(MALTypePtr element, MALType::Types type)
 {
     if (element->type() != type) {
-        throw std::runtime_error("ERROR: Expected '"+ MALType::typeToString(type) +"', but found '"+ MALType::typeToString(element->type()) +"'");
+        throw std::runtime_error("ERROR: Expected '"+ MALType::typeToString(type) +"', but found '"+ MALType::typeToString(element->type()) +"' in '"+element->to_string() + "'");
     }
 }
