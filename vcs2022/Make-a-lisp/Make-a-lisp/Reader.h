@@ -26,5 +26,6 @@ MALTypePtr read_form(Reader& reader);
 MALTypePtr read_list(Reader& reader);
 MALTypePtr read_vector(Reader& reader);
 MALTypePtr read_map(Reader& reader);
+MALTypePtr read_deref_shortcut(Reader& reader);
 MALTypePtr read_atom(Reader& reader);
 std::string pr_str(MALTypePtr malType);

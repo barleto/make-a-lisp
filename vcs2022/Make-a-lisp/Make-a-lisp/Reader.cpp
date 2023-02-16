@@ -63,6 +63,9 @@ MALTypePtr read_form(Reader& reader)
     case '{':
         return read_map(reader);
         break;
+    case '@':
+        return read_deref_shortcut(reader);
+        break;
     default:
         return read_atom(reader);
         break;
@@ -168,6 +171,17 @@ MALTypePtr read_map(Reader& reader)
     }
     throw std::runtime_error("Error parsing: no matching ']' found until the end of input.");
     return nullptr;
+}
+
+MALTypePtr read_deref_shortcut(Reader& reader)
+{
+    auto malVector = std::shared_ptr<MALVectorType>(new MALVectorType());
+    reader.next();
+    std::string token = reader.next();
+    MALListTypePtr ast(new MALListType());
+    ast->values.push_back(MALSymbolTypePtr(new MALSymbolType("deref")));
+    ast->values.push_back(MALSymbolTypePtr(new MALSymbolType(token)));
+    return ast;
 }
 
 MALTypePtr read_atom(Reader& reader)
