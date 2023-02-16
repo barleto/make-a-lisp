@@ -14,6 +14,8 @@ void checkArgsIsAtLeast(std::string name, MALTypePtr type, int correctValue, int
 
 void checkArgsIsAtLeast(std::string name, int correctValue, int argCount);
 
+void checkArgsNumber(std::string name, int correctValue, int argCount);
+
 void checkArgsIs(std::string name, MALTypePtr type, int correctValue, int argCount);
 
 void assertMalType(MALTypePtr element, MALType::Types type);

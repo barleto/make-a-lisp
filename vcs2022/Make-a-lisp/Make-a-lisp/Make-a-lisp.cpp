@@ -17,6 +17,8 @@ MALTypePtr READ(std::string input) {
 
 MALTypePtr EVAL(MALTypePtr ast, EnvPtr env);
 
+EnvPtr replEnv(new Env());
+
 MALTypePtr eval_ast(MALTypePtr ast, EnvPtr env) {
     switch (ast->type()) {
     case MALType::Types::Symbol: {
@@ -56,6 +58,9 @@ MALTypePtr eval_ast(MALTypePtr ast, EnvPtr env) {
 }
 
 MALTypePtr EVAL(MALTypePtr ast, EnvPtr env) {
+    if (env == nullptr) {
+        env = replEnv;
+    }
     EnvPtr currentEnv = env;
     MALTypePtr currentAst = ast;
     for (;;) {
@@ -66,7 +71,9 @@ MALTypePtr EVAL(MALTypePtr ast, EnvPtr env) {
         if (astAsList->values.size() == 0) {
             return currentAst;
         }
-
+        if (astAsList->values[0] == nullptr) {
+            auto a = 2;
+        }
         if (astAsList->values[0]->type() == MALType::Types::Symbol) {
             std::shared_ptr<HandleSpecialFormResult> result = handleSpecialForms(astAsList, currentEnv);
             if (result->tco) {
@@ -81,7 +88,7 @@ MALTypePtr EVAL(MALTypePtr ast, EnvPtr env) {
 
         auto evalList = std::dynamic_pointer_cast<MALListType>(eval_ast(astAsList, currentEnv));
         if (evalList->values[0]->type() != MALType::Types::Function) {
-            throw std::runtime_error("Error: function not found with name '" + astAsList->values[0]->to_string() + "' in '"+ astAsList->to_string() +"'");
+            throw std::runtime_error("Error: function not found with name '" + astAsList->values[0]->to_string() + "' in '" + astAsList->to_string() + "'");
         }
         auto callable = std::dynamic_pointer_cast<MALCallableType>(evalList->values[0]);
         if (callable->type() != MALType::Types::Function) {
@@ -93,11 +100,11 @@ MALTypePtr EVAL(MALTypePtr ast, EnvPtr env) {
         args.erase(args.begin());
         if (callable->isBuiltin()) {
             auto builtinFunc = std::dynamic_pointer_cast<MALBuiltinFuncType>(evalList->values[0]);
-            return builtinFunc->fn(args);
+            return builtinFunc->fn(args, currentEnv);
         }
         else {
             auto func = std::dynamic_pointer_cast<MALFuncType>(evalList->values[0]);
-                EnvPtr newEnv(new Env(func->env, func->bindingsList, args));
+            EnvPtr newEnv(new Env(func->env, func->bindingsList, args));
             currentEnv = newEnv;
             currentAst = func->funcBody;
             continue;
@@ -110,7 +117,7 @@ void PRINT(MALTypePtr result) {
         std::cout << "=> \"" << std::dynamic_pointer_cast<MALStringType>(result)->value << "\"" << std::endl;
     }
     else {
-        std::cout << "=> " << pr_str(result) << std::endl;
+        std::cout << "\033[32m=> " << pr_str(result) << "\033[0m" << std::endl;
     }
 }
 MALTypePtr readEval(std::string input, EnvPtr env) {
@@ -126,8 +133,17 @@ void rep(std::string input, EnvPtr env) {
         }
     }
     catch (std::runtime_error& e) {
-        std::cout << e.what() << std::endl;
+        std::cout << "\033[31m" << e.what() << "\033[0m" << std::endl;
     }
+}
+
+
+void installBuiltInOps(EnvPtr env)
+{
+    addBuiltInOperationsToEnv(env);
+    readEval("(def! not (fn* (a) (if a false true)))", env);
+    readEval("(def! load-file (fn* (filename) \
+        (eval (read-string (str \"(do \" (slurp filename) \"\nnil)\")))))", env);
 }
 
 int main() {
@@ -135,16 +151,16 @@ int main() {
     linenoise::LoadHistory(history_path);
     std::string input;
 
-    EnvPtr env(new Env());
-    addBuiltInOperationsToEnv(env);
-    readEval("(def! not (fn* (a) (if a false true)))", env);
+    installBuiltInOps(replEnv);
     for (;;) {
         auto quit = linenoise::Readline("user> ", input);
-        if (quit)
+        if (quit) {
             break;
+        }
+
         linenoise::AddHistory(input.c_str());
         linenoise::SaveHistory(history_path);
-        rep(input, env);
+        rep(input, replEnv);
     }
 
     return 0;

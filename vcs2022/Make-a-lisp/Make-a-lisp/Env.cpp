@@ -66,7 +66,7 @@ MALTypePtr Env::get(MALSymbolTypePtr symbol)
     return result;
 }
 
-std::string Env::dataToString()
+std::string Env::print()
 {
     std::string result = "";
     auto size = this->data.size();
@@ -79,5 +79,6 @@ std::string Env::dataToString()
             result += " ";
         }
     }
+    std::cout << "AAAAAAAAAAA" << std::endl;
     return "{" + result + "}";
 }

@@ -98,7 +98,9 @@ MALTypePtr read_list(Reader& reader)
 
 MALTypePtr read_vector(Reader& reader)
 {
-    auto malVector = std::shared_ptr<MALVectorType>(new MALVectorType());
+    //auto malVector = std::shared_ptr<MALVectorType>(new MALVectorType());
+    auto malVector = std::shared_ptr<MALListType>(new MALListType());
+    malVector->isVector = true;
     reader.next();
     for (;;) {
         Token token;

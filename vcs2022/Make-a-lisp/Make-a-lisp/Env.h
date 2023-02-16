@@ -40,7 +40,7 @@ public:
 	/*takes a symbol key and uses the find method to locate the environment with the key, then returns the matching value. 
 	If no key is found up the outer chain, then throws/raises a "not found" error.*/
 	MALTypePtr get(MALSymbolTypePtr symbol);
-	std::string dataToString();
+	std::string print();
 };
 
 struct HandleSpecialFormResult {

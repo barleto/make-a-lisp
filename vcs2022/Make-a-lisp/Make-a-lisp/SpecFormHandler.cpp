@@ -8,7 +8,7 @@ std::shared_ptr<HandleSpecialFormResult> handleLetStart(MALListTypePtr astList, 
     if (!astList->values[1]->isIteratable()) {
         throw std::runtime_error("ERROR: 'let*' binding list must be of type list or vector.");
     }
-    auto bindingList = std::dynamic_pointer_cast<MALIteratableContainerType>(astList->values[1]);
+    auto bindingList = std::dynamic_pointer_cast<MALSequenceType>(astList->values[1]);
     if (bindingList->size() % 2 != 0) {
         throw std::runtime_error("ERROR: Mismatched number of elements in binding list: '" + bindingList->to_string() + "'.");
     }
@@ -96,7 +96,7 @@ std::shared_ptr<HandleSpecialFormResult> handleClosure(MALListTypePtr astList, E
     */
     checkArgsIs("fn*", astList, 3, astList->values.size());
     if (astList->values[1]->type() != MALType::Types::List) {
-        throw std::runtime_error("Error: First parameter of 'fn*' mus be a list. Found: " + astList->values[1]->to_string());
+        throw std::runtime_error("Error: First parameter of 'fn*' must be a list or vector. Found: " + astList->values[1]->to_string());
     }
     auto bindingsList = std::dynamic_pointer_cast<MALListType>(astList->values[1]);
     for (auto p = bindingsList->values.begin(); p != bindingsList->values.end(); p++) {

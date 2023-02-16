@@ -12,6 +12,12 @@ void checkArgsIsAtLeast(std::string name, int correctValue, int argCount) {
     }
 }
 
+void checkArgsNumber(std::string name, int correctValue, int argCount) {
+    if (argCount != correctValue) {
+        throw std::runtime_error("ERROR: '" + name + "' needs " + std::to_string(correctValue) + " param(s).");
+    }
+}
+
 void checkArgsIs(std::string name, MALTypePtr type, int correctValue, int argCount) {
     if (argCount != correctValue) {
         throw std::runtime_error("ERROR: '" + name + "' need exactly " + std::to_string(correctValue) + " params. Params found: '" + type->to_string() + "'");

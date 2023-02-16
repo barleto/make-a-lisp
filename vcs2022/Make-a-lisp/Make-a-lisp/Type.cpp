@@ -312,3 +312,22 @@ std::string MALBuiltinFuncType::to_string()
 {
     return "<builtin:" + this->name + ">";
 }
+
+std::string MALAtomType::to_string()
+{
+    return "*" + this->ref->to_string();
+}
+
+bool MALAtomType::isEqualTo(MALTypePtr other)
+{
+    if (other->type() != this->type()) {
+        return false;
+    }
+    auto castOther = std::dynamic_pointer_cast<MALAtomType>(other);
+    return this->ref->isEqualTo(castOther->ref);
+}
+
+MALTypePtr MALAtomType::deepCopy()
+{
+    return std::shared_ptr<MALAtomType>(new MALAtomType(this->ref));
+}

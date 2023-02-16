@@ -28,7 +28,8 @@ public:
 		Keyword,
 		Vector,
 		HashMap,
-		Function
+		Function,
+		Atom,
 	};
 
 	static std::string typeToString(Types t);
@@ -41,7 +42,7 @@ public:
 	virtual MALTypePtr deepCopy() = 0;
 };
 
-class MALAtomType : public MALType
+class MALLeafType : public MALType
 {
 public:
 	virtual const bool isContainer() const override { return false; };
@@ -54,7 +55,7 @@ public:
 	virtual size_t size() = 0;
 };
 
-class MALIteratableContainerType : public MALContainerType
+class MALSequenceType : public MALContainerType
 {
 public:
 	virtual bool isIteratable() override { return true; };
@@ -62,7 +63,7 @@ public:
 	virtual void setAt(size_t pos, MALTypePtr value) = 0;
 };
 
-class MALListType : public MALIteratableContainerType
+class MALListType : public MALSequenceType
 {
 public:
 	virtual MALTypePtr deepCopy() override;
@@ -73,9 +74,10 @@ public:
 	virtual size_t size() override { return values.size(); };
 	virtual MALTypePtr getAt(size_t pos) override { return values[pos]; };
 	virtual void setAt(size_t pos, MALTypePtr value) { values[pos] = value; };
+	bool isVector;
 };
 
-class MALNumberType : public MALAtomType {
+class MALNumberType : public MALLeafType {
 public:
 	virtual MALTypePtr deepCopy() override;
 	virtual bool isEqualTo(MALTypePtr other) override;
@@ -85,7 +87,7 @@ public:
 	virtual MALType::Types type() const override { return  MALType::Types::Number; }
 };
 
-class MALSymbolType : public MALAtomType {
+class MALSymbolType : public MALLeafType {
 public:
 	virtual MALTypePtr deepCopy() override;
 	virtual bool isEqualTo(MALTypePtr other) override;
@@ -95,7 +97,7 @@ public:
 	virtual MALType::Types type() const override { return  MALType::Types::Symbol; }
 };
 
-class MALStringType : public MALAtomType {
+class MALStringType : public MALLeafType {
 public:
 	virtual MALTypePtr deepCopy() override;
 	virtual bool isEqualTo(MALTypePtr other) override;
@@ -105,7 +107,7 @@ public:
 	virtual MALType::Types type() const override { return  MALType::Types::String; }
 };
 
-class MALNilType : public MALAtomType {
+class MALNilType : public MALLeafType {
 public:
 	virtual MALTypePtr deepCopy() override;
 	virtual bool isEqualTo(MALTypePtr other) override;
@@ -113,7 +115,7 @@ public:
 	virtual MALType::Types type() const override { return  MALType::Types::Nil; }
 };
 
-class MALBoolType : public MALAtomType {
+class MALBoolType : public MALLeafType {
 public:
 	virtual MALTypePtr deepCopy() override;
 	virtual bool isEqualTo(MALTypePtr other) override;
@@ -123,7 +125,7 @@ public:
 	virtual MALType::Types type() const override { return  MALType::Types::Bool; }
 };
 
-class MalKeywordType : public MALAtomType {
+class MalKeywordType : public MALLeafType {
 public:
 	virtual MALTypePtr deepCopy() override;
 	virtual bool isEqualTo(MALTypePtr other) override;
@@ -133,7 +135,7 @@ public:
 	virtual MALType::Types type() const override { return  MALType::Types::Keyword; }
 };
 
-class MALVectorType : public MALIteratableContainerType {
+class MALVectorType : public MALSequenceType {
 public:
 	virtual MALTypePtr deepCopy() override;
 	virtual bool isEqualTo(MALTypePtr other) override;
@@ -167,9 +169,9 @@ public:
 	virtual size_t size() override { return values.size(); };
 };
 
-using MALFunctor = std::function<MALTypePtr (std::vector<MALTypePtr>)>;
+using MALFunctor = std::function<MALTypePtr (std::vector<MALTypePtr>, std::shared_ptr<Env>)>;
 
-class MALCallableType : public MALAtomType {
+class MALCallableType : public MALLeafType {
 public:
 	virtual bool isBuiltin() = 0;
 	virtual MALType::Types type() const override { return  MALType::Types::Function; }
@@ -198,5 +200,15 @@ public:
 	MALBuiltinFuncType(std::string name, MALFunctor fn) : MALCallableType(name), fn(fn) {}
 	virtual std::string to_string() override;
 	virtual bool isBuiltin() override { return true; };
+};
+
+class MALAtomType : public MALLeafType {
+public:
+	virtual std::string to_string() override ;
+	virtual bool isEqualTo(MALTypePtr other) override;
+	virtual MALTypePtr deepCopy() override;
+	virtual MALType::Types type() const override { return  MALType::Types::Atom; };
+	MALTypePtr ref;
+	MALAtomType(MALTypePtr ref) : ref(ref) {};
 };
 
