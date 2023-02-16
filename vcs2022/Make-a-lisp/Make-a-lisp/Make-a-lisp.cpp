@@ -146,12 +146,8 @@ void installBuiltInOps(EnvPtr env)
         (eval (read-string (str \"(do \" (slurp filename) \"\nnil)\")))))", env);
 }
 
-int main() {
-    const auto history_path = "history.txt";
-    linenoise::LoadHistory(history_path);
-    std::string input;
-
-    installBuiltInOps(replEnv);
+void REPL(std::string& input, const char* const& history_path)
+{
     for (;;) {
         auto quit = linenoise::Readline("user> ", input);
         if (quit) {
@@ -162,6 +158,23 @@ int main() {
         linenoise::SaveHistory(history_path);
         rep(input, replEnv);
     }
+}
+
+
+int main(int argc, char* argv[]) {
+    const auto history_path = "history.txt";
+    linenoise::LoadHistory(history_path);
+    std::string input;
+
+    installBuiltInOps(replEnv);
+
+    if (argc >= 2) {
+        std::string fileName(argv[1]);
+        readEval("(load-file \"" + fileName + "\")", replEnv);
+        return 0;
+    }
+
+    REPL(input, history_path);
 
     return 0;
 }

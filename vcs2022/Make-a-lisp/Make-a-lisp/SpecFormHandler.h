@@ -13,6 +13,8 @@
 MALTypePtr EVAL(MALTypePtr ast, EnvPtr env);
 MALTypePtr eval_ast(MALTypePtr ast, EnvPtr env);
 
+void REPL(std::string& input, const char* const& history_path);
+
 std::shared_ptr<HandleSpecialFormResult> handleSpecialForms(MALListTypePtr astList, EnvPtr env);
 
 
