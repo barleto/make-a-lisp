@@ -13,7 +13,7 @@ void checkArgsIsAtLeast(std::string name, int correctValue, int argCount) {
 }
 
 void checkArgsNumber(std::string name, int correctValue, int argCount) {
-    if (argCount != correctValue) {
+    if (std::max(0, argCount) != correctValue) {
         throw std::runtime_error("ERROR: '" + name + "' needs " + std::to_string(correctValue) + " param(s).");
     }
 }

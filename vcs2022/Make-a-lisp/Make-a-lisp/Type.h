@@ -14,8 +14,10 @@
 #define MALSymbolTypePtr std::shared_ptr<MALSymbolType>
 
 class Env;
+class MALSymbolType;
+class MALListType;
 
-class MALType
+class MALType : public std::enable_shared_from_this<MALType>
 {
 public:
 	enum Types {
@@ -40,6 +42,38 @@ public:
 	virtual bool isIteratable() { return false; };
 	virtual bool isEqualTo(MALTypePtr other) = 0;
 	virtual MALTypePtr deepCopy() = 0;
+
+	bool tryAsSymbol(std::shared_ptr<MALSymbolType>& ptr) {
+		if (type() != Types::Symbol) {
+			ptr = nullptr;
+			return false;
+		}
+		ptr = std::dynamic_pointer_cast<MALSymbolType>(this->shared_from_this());
+		return true;
+	}
+
+	bool tryAsList(std::shared_ptr<MALListType>& ptr) {
+		if (type() != Types::List) {
+			ptr = nullptr;
+			return false;
+		}
+		ptr = std::dynamic_pointer_cast<MALListType>(this->shared_from_this());
+		return true;
+	}
+
+	std::shared_ptr<MALSymbolType> asSymbol() {
+		if (type() != Types::Symbol) {
+			return nullptr;
+		}
+		return std::dynamic_pointer_cast<MALSymbolType>(this->shared_from_this());
+	}
+
+	std::shared_ptr<MALListType> asList() {
+		if (type() != Types::List) {
+			return nullptr;
+		}
+		return std::dynamic_pointer_cast<MALListType>(this->shared_from_this());
+	}
 };
 
 class MALLeafType : public MALType
@@ -61,6 +95,7 @@ public:
 	virtual bool isIteratable() override { return true; };
 	virtual MALTypePtr getAt(size_t pos) = 0;
 	virtual void setAt(size_t pos, MALTypePtr value) = 0;
+	virtual void push_back(MALTypePtr value) = 0;
 };
 
 class MALListType : public MALSequenceType
@@ -75,6 +110,9 @@ public:
 	virtual MALTypePtr getAt(size_t pos) override { return values[pos]; };
 	virtual void setAt(size_t pos, MALTypePtr value) { values[pos] = value; };
 	bool isVector;
+	virtual void push_back(MALTypePtr value) override {
+		this->values.push_back(value);
+	}
 };
 
 class MALNumberType : public MALLeafType {
@@ -145,6 +183,9 @@ public:
 	virtual size_t size() override { return values.size(); };
 	virtual MALTypePtr getAt(size_t pos) override { return values[pos]; };
 	virtual void setAt(size_t pos, MALTypePtr value) { values[pos] = value; };
+	virtual void push_back(MALTypePtr value) override {
+		this->values.push_back(value);
+	}
 };
 
 struct MALTypeHash {

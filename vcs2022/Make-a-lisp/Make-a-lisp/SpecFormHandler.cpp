@@ -124,6 +124,67 @@ std::shared_ptr<HandleSpecialFormResult> handleClosure(MALListTypePtr astList, E
     return result;
 }
 
+std::shared_ptr<HandleSpecialFormResult> handleQuote(MALListTypePtr astList, EnvPtr env) {
+    checkArgsNumber("quote", 1, astList->size() - 1);
+    auto sfr = new HandleSpecialFormResult{ false, env, astList->values[1]};
+    std::shared_ptr<HandleSpecialFormResult> result(sfr);
+    return result;
+}
+
+MALTypePtr quasiquote(MALTypePtr ast) {
+    auto astAsList = ast->asList();
+    std::shared_ptr<MALSymbolType> argAsSymbol(nullptr);
+    std::shared_ptr<MALListType> argAsList(nullptr);
+    if (ast->type() == MALType::Types::List)
+    {
+        if (astAsList->size() > 0 && astAsList->values[0]->tryAsSymbol(argAsSymbol) && argAsSymbol->name == "unquote") {
+            return astAsList->values[1];
+        }
+        else {
+            MALListTypePtr result(new MALListType());
+            for (int i = astAsList->size() - 1; i >= 0; i--) {
+                if (astAsList->values[i]->tryAsList(argAsList) && argAsList->size() > 0 && argAsList->values[0]->tryAsSymbol(argAsSymbol) && argAsSymbol->name == "splice-unquote") {
+                    auto oldResult = result;
+                    result = MALListTypePtr(new MALListType());
+                    result->values.push_back(MALSymbolTypePtr(new MALSymbolType("concat")));
+                    result->values.push_back(argAsList->values[1]);
+                    result->values.push_back(oldResult);
+                }
+                else {
+                    auto oldResult = result;
+                    result = MALListTypePtr(new MALListType());
+                    result->values.push_back(MALSymbolTypePtr(new MALSymbolType("cons")));
+                    result->values.push_back(quasiquote(astAsList->values[i]));
+                    result->values.push_back(oldResult);
+                }
+            }
+            return result;
+        }
+    } else if (ast->type() == MALType::Types::HashMap || ast->type() == MALType::Types::Symbol) {
+        MALListTypePtr result(new MALListType());
+        result->values.push_back(MALSymbolTypePtr(new MALSymbolType("quote")));
+        result->values.push_back(ast);
+        return result;
+    }
+    else {
+        return ast;
+    }
+}
+
+std::shared_ptr<HandleSpecialFormResult> handleQuasiquoteExpand(MALListTypePtr astList, EnvPtr env) {
+    checkArgsNumber("quasiquoteexpand", 1, astList->size() - 1);
+    auto sfr = new HandleSpecialFormResult{ false, env, quasiquote(astList->values[1]) };
+    std::shared_ptr<HandleSpecialFormResult> result(sfr);
+    return result;
+}
+
+std::shared_ptr<HandleSpecialFormResult> handleQuasiquote(MALListTypePtr astList, EnvPtr env) {
+    checkArgsNumber("quasiquote", 1, astList->size() - 1);
+    auto sfr = new HandleSpecialFormResult{ true, env, quasiquote(astList->values[1]) };
+    std::shared_ptr<HandleSpecialFormResult> result(sfr);
+    return result;
+}
+
 std::shared_ptr<HandleSpecialFormResult> handleSpecialForms(MALListTypePtr astList, EnvPtr env) {
     auto lookupSymbol = std::dynamic_pointer_cast<MALSymbolType>(astList->values[0]);
     if (lookupSymbol->name == "def!") {
@@ -140,6 +201,15 @@ std::shared_ptr<HandleSpecialFormResult> handleSpecialForms(MALListTypePtr astLi
     }
     else if (lookupSymbol->name == "fn*") {
         return handleClosure(astList, env);
+    }
+    else if (lookupSymbol->name == "quote") {
+        return handleQuote(astList, env);
+    }
+    else if (lookupSymbol->name == "quasiquote") {
+        return handleQuasiquote(astList, env);
+    }
+    else if (lookupSymbol->name == "quasiquoteexpand") {
+        return handleQuasiquoteExpand(astList, env);
     }
     auto sfr = new HandleSpecialFormResult{ false, env, nullptr };
     std::shared_ptr<HandleSpecialFormResult> result(sfr);

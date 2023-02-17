@@ -217,6 +217,29 @@ MALTypePtr evalSpecialForm(std::vector<MALTypePtr> args, EnvPtr env) {
     return res;
 }
 
+
+MALTypePtr cons(std::vector<MALTypePtr> args, EnvPtr env) {
+    checkArgsNumber("cons", 2, args.size());
+    assertMalType(args[1], MALType::Types::List);
+    auto arg2List = args[1]->asList();
+    MALListTypePtr newList(new MALListType());
+    newList->values.push_back(args[0]);
+    newList->values.insert(newList->values.end(), arg2List->values.begin(), arg2List->values.end());
+    return newList;
+}
+
+MALTypePtr concatList(std::vector<MALTypePtr> args, EnvPtr env) {
+    MALListTypePtr newList(new MALListType());
+    for (auto p = args.begin(); p != args.end(); p++) {
+        assertMalType(*p, MALType::Types::List);
+        auto arg2List = std::dynamic_pointer_cast<MALListType>(*p);
+        for (auto pp = arg2List->values.begin(); pp != arg2List->values.end(); pp++) {
+            newList->values.push_back(*pp);
+        }
+    }
+    return newList;
+}
+
 std::map<std::string, MALFunctor> ns = {
     {"+", add},
     {"-", sub},
@@ -244,6 +267,8 @@ std::map<std::string, MALFunctor> ns = {
     {"reset!", resetBang},
     {"swap!", swapBang},
     {"eval", evalSpecialForm},
+    {"cons", cons},
+    {"concat", concatList},
 };
 
 void addBuiltInOperationsToEnv(EnvPtr env)

@@ -64,15 +64,12 @@ MALTypePtr EVAL(MALTypePtr ast, EnvPtr env) {
     EnvPtr currentEnv = env;
     MALTypePtr currentAst = ast;
     for (;;) {
-        if (currentAst->type() != MALType::Types::List) {
+        if (currentAst->type() != MALType::Types::List || currentAst->asList()->isVector) {
             return eval_ast(currentAst, currentEnv);
         }
         auto astAsList = std::dynamic_pointer_cast<MALListType>(currentAst);
         if (astAsList->values.size() == 0) {
             return currentAst;
-        }
-        if (astAsList->values[0] == nullptr) {
-            auto a = 2;
         }
         if (astAsList->values[0]->type() == MALType::Types::Symbol) {
             std::shared_ptr<HandleSpecialFormResult> result = handleSpecialForms(astAsList, currentEnv);
