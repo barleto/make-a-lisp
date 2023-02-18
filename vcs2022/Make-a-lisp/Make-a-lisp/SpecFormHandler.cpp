@@ -1,7 +1,7 @@
 #include "SpecFormHandler.h"
 #include "assert.h"
 
-std::shared_ptr<HandleSpecialFormResult> handleLetStart(MALListTypePtr astList, EnvPtr env)
+std::shared_ptr<HandleSpecialFormResult> handleLetStar(MALListTypePtr astList, EnvPtr env)
 {
     checkArgsIsAtLeast("let*", astList, 3, astList->values.size());
     EnvPtr newEnv(new Env(env));
@@ -198,7 +198,7 @@ std::shared_ptr<HandleSpecialFormResult> handleSpecialForms(MALListTypePtr astLi
         return handleDefBang(astList, env);
     }
     else if (lookupSymbol->name == "let*") {
-        return handleLetStart(astList, env);
+        return handleLetStar(astList, env);
     }
     else if (lookupSymbol->name == "do") {
         return handleDo(astList, env);
