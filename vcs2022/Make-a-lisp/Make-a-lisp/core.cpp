@@ -40,21 +40,34 @@ MALTypePtr divs(std::vector<MALTypePtr> args, EnvPtr env) {
     return std::shared_ptr<MALNumberType>(new MALNumberType(result));
 }
 
-MALTypePtr print(std::vector<MALTypePtr> args, EnvPtr env) {
+MALTypePtr prn(std::vector<MALTypePtr> args, EnvPtr env) {
     auto nil = std::shared_ptr<MALNilType>(new MALNilType());
-    for (auto p = args.begin(); p != args.end(); p++) {
-        std::cout << pr_str(*p) << " ";
+    if (args.size() <= 0) {
+        return nil;
     }
-    std::cout << std::endl;
-    return std::shared_ptr<MALNilType>(new MALNilType());
+    std::string result = "";
+    int i = 0;
+    for (i = 0; i < args.size() - 1; i++) {
+        result += pr_str(args[i], true) + " ";
+    }
+    result += pr_str(args[i], true);
+    std::cout << result;
+    return nil;
 }
 
 MALTypePtr println(std::vector<MALTypePtr> args, EnvPtr env) {
     auto nil = std::shared_ptr<MALNilType>(new MALNilType());
-    for (auto p = args.begin(); p != args.end(); p++) {
-        std::cout << pr_str(*p) << std::endl;
+    if (args.size() <= 0) {
+        return nil;
     }
-    return std::shared_ptr<MALNilType>(new MALNilType());
+    std::string result = "";
+    int i = 0;
+    for (i = 0; i < args.size() - 1; i++) {
+        result += pr_str(args[i], false) + " ";
+    }
+    result += pr_str(args[i], false);
+    std::cout << result;
+    return nil;
 }
 
 MALTypePtr list(std::vector<MALTypePtr> args, EnvPtr env) {
@@ -155,17 +168,6 @@ MALTypePtr slurp(std::vector<MALTypePtr> args, EnvPtr env) {
     return std::shared_ptr<MALStringType>(new MALStringType(buffer.str()));
 }
 
-MALTypePtr concatStr(std::vector<MALTypePtr> args, EnvPtr env) {
-    std::string result = "";
-    //TODO
-    for (auto p = args.begin(); p != args.end(); p++) {
-        assertMalType(*p, MALType::Types::String);
-        auto stringType = std::dynamic_pointer_cast<MALStringType>(*p);
-        result += stringType->value;
-    }
-    return std::shared_ptr<MALStringType>(new MALStringType(result));
-}
-
 MALTypePtr atom(std::vector<MALTypePtr> args, EnvPtr env) {
     checkArgsNumber("atom", 1, args.size());
     return std::shared_ptr<MALAtomType>(new MALAtomType(args[0]));
@@ -240,13 +242,38 @@ MALTypePtr concatList(std::vector<MALTypePtr> args, EnvPtr env) {
     return newList;
 }
 
+MALTypePtr pr_str_func(std::vector<MALTypePtr> args, EnvPtr env) {
+    if (args.size() <= 0) {
+        return std::shared_ptr<MALStringType>(new MALStringType(""));
+    }
+    std::string result = "";
+    int i = 0;
+    for (i = 0; i < args.size() - 1; i++) {
+        result += pr_str(args[i], true) + " ";
+    }
+    result += pr_str(args[i], true);
+    return std::shared_ptr<MALStringType>(new MALStringType(result));
+}
+
+MALTypePtr str(std::vector<MALTypePtr> args, EnvPtr env) {
+    if (args.size() <= 0) {
+        return std::shared_ptr<MALStringType>(new MALStringType(""));
+    }
+    std::string result = "";
+    int i = 0;
+    for (i = 0; i < args.size() - 1; i++) {
+        result += pr_str(args[i], false);
+    }
+    result += pr_str(args[i], false);
+    return std::shared_ptr<MALStringType>(new MALStringType(result));
+}
+
 std::map<std::string, MALFunctor> ns = {
     {"+", add},
     {"-", sub},
     {"*", mult},
     {"/", divs},
-    {"print", print},
-    {"prn", print},
+    {"prn", prn},
     {"println", println},
     {"list", list},
     {"list?", isList},
@@ -260,7 +287,6 @@ std::map<std::string, MALFunctor> ns = {
     {">=", gte},
     {"read-string", readString},
     {"slurp", slurp},
-    {"str", concatStr},
     {"atom", atom},
     {"atom?", isAtom},
     {"deref", deref},
@@ -269,6 +295,8 @@ std::map<std::string, MALFunctor> ns = {
     {"eval", evalSpecialForm},
     {"cons", cons},
     {"concat", concatList},
+    {"pr-str", pr_str_func},
+    {"str", str},
 };
 
 void addBuiltInOperationsToEnv(EnvPtr env)

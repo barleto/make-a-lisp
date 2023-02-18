@@ -73,8 +73,8 @@ std::string Env::print()
     int i = 0;
     for (auto p = this->data.begin(); p != this->data.end(); p++, i++) {
         auto pair = *p;
-        result += pair.first->to_string() + " ";
-        result += pair.second->to_string();
+        result += pair.first->to_string(true) + " ";
+        result += pair.second->to_string(true);
         if (i != size - 1) {
             result += " ";
         }

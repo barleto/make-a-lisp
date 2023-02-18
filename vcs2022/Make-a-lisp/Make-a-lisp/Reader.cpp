@@ -1,6 +1,15 @@
 #include "Reader.h"
 #include <stdexcept>
 
+void replaceAll(std::string& input, std::string match, std::string replaceWith) {
+    int i = 0;
+    while (input.find(match, i) != std::string::npos) {
+        int index = input.find(match, i);
+        input.replace(index, match.size(), replaceWith);
+        i = index + replaceWith.size();
+    }
+}
+
 Token Reader::next()
 {
     if (this->isEOF()) {
@@ -193,8 +202,8 @@ MALTypePtr read_atom(Reader& reader)
         return std::shared_ptr<MALNumberType>(new MALNumberType(stod(token)));
     }
     else if (token[0] == '"') {
-
-        return std::shared_ptr<MALStringType>(new MALStringType(token.substr(1, token.size() - 2)));
+        token = token.substr(1, token.size() - 2);
+        return std::shared_ptr<MALStringType>(new MALStringType(token));
     }
     else if (token[0] == ':') {
         return std::shared_ptr<MalKeywordType>(new MalKeywordType(token.substr(1)));
@@ -214,7 +223,7 @@ MALTypePtr read_atom(Reader& reader)
     return nullptr;
 }
 
-std::string pr_str(MALTypePtr malType)
+std::string pr_str(MALTypePtr malType, bool print_readably)
 {
-    return malType->to_string();
+    return malType->to_string(print_readably);
 }

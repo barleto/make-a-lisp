@@ -85,7 +85,7 @@ MALTypePtr EVAL(MALTypePtr ast, EnvPtr env) {
 
         auto evalList = std::dynamic_pointer_cast<MALListType>(eval_ast(astAsList, currentEnv));
         if (evalList->values[0]->type() != MALType::Types::Function) {
-            throw std::runtime_error("Error: function not found with name '" + astAsList->values[0]->to_string() + "' in '" + astAsList->to_string() + "'");
+            throw std::runtime_error("Error: function not found with name '" + astAsList->values[0]->to_string(true) + "' in '" + astAsList->to_string(true) + "'");
         }
         auto callable = std::dynamic_pointer_cast<MALCallableType>(evalList->values[0]);
         if (callable->type() != MALType::Types::Function) {
@@ -110,12 +110,7 @@ MALTypePtr EVAL(MALTypePtr ast, EnvPtr env) {
 }
 
 void PRINT(MALTypePtr result) {
-    if (result->type() == MALType::Types::String) {
-        std::cout << "=> \"" << std::dynamic_pointer_cast<MALStringType>(result)->value << "\"" << std::endl;
-    }
-    else {
-        std::cout << "\033[32m=> " << pr_str(result) << "\033[0m" << std::endl;
-    }
+    std::cout << "\033[32m=> " << pr_str(result, true) << "\033[0m" << std::endl;
 }
 MALTypePtr readEval(std::string input, EnvPtr env) {
     auto ast = READ(input);

@@ -1,5 +1,14 @@
 #include "Type.h"
 
+static void replaceAll(std::string& input, std::string match, std::string replaceWith) {
+    int i = 0;
+    while (input.find(match, i) != std::string::npos) {
+        int index = input.find(match, i);
+        input.replace(index, match.size(), replaceWith);
+        i = index + replaceWith.size();
+    }
+}
+
 std::string MALType::typeToString(Types t)
 {
     switch (t) {
@@ -64,12 +73,12 @@ bool MALListType::isEqualTo(MALTypePtr other)
     return true;
 }
 
-std::string MALListType::to_string()
+std::string MALListType::to_string(bool print_readably)
 {
     std::string result = "";
     auto size = this->values.size();
     for (int i = 0; i < size; i++) {
-        result += this->values[i]->to_string();
+        result += this->values[i]->to_string(print_readably);
         if (i != size - 1) {
             result += " ";
         }
@@ -95,7 +104,7 @@ bool MALNumberType::isEqualTo(MALTypePtr other)
     return castOther->value == this->value;
 }
 
-std::string MALNumberType::to_string()
+std::string MALNumberType::to_string(bool print_readably)
 {
     auto dec = abs(this->value) - abs(floor(this->value));
     if (dec != 0) {
@@ -117,7 +126,7 @@ bool MALSymbolType::isEqualTo(MALTypePtr other)
     return castOther->name == this->name;
 }
 
-std::string MALSymbolType::to_string()
+std::string MALSymbolType::to_string(bool print_readably)
 {
     return this->name;
 }
@@ -135,9 +144,18 @@ bool MALStringType::isEqualTo(MALTypePtr other)
     return castOther->value == this->value;
 }
 
-std::string MALStringType::to_string()
+std::string MALStringType::to_string(bool print_readably)
 {
-    return this->value;
+    if (print_readably) {
+        std::string result = this->value;
+        replaceAll(result, "\n", "\\n");
+        replaceAll(result, "\\", "\\\\");
+        replaceAll(result, "\"", "\\\"");
+        return result;
+    }
+    else {
+        return this->value;
+    }
 }
 
 MALTypePtr MALNilType::deepCopy() {
@@ -149,7 +167,7 @@ bool MALNilType::isEqualTo(MALTypePtr other)
     return other->type() == this->type();
 }
 
-std::string MALNilType::to_string()
+std::string MALNilType::to_string(bool print_readably)
 {
     return "nil";
 }
@@ -167,7 +185,7 @@ bool MALBoolType::isEqualTo(MALTypePtr other)
     return castOther->value == this->value;
 }
 
-std::string MALBoolType::to_string()
+std::string MALBoolType::to_string(bool print_readably)
 {
     return this->value ? "true" : "false";
 }
@@ -185,7 +203,7 @@ bool MalKeywordType::isEqualTo(MALTypePtr other)
     return castOther->value == this->value;
 }
 
-std::string MalKeywordType::to_string()
+std::string MalKeywordType::to_string(bool print_readably)
 {
     return ":" + this->value;
 }
@@ -216,12 +234,12 @@ bool MALVectorType::isEqualTo(MALTypePtr other)
     return true;
 }
 
-std::string MALVectorType::to_string()
+std::string MALVectorType::to_string(bool print_readably)
 {
     std::string result = "";
     auto size = this->values.size();
     for (int i = 0; i < size; i++) {
-        result += this->values[i]->to_string();
+        result += this->values[i]->to_string(print_readably);
         if (i != size - 1) {
             result += " ";
         }
@@ -263,15 +281,15 @@ bool MALHashMapType::isEqualTo(MALTypePtr other)
     return true;
 }
 
-std::string MALHashMapType::to_string()
+std::string MALHashMapType::to_string(bool print_readably)
 {
     std::string result = "";
     auto size = this->values.size();
     int i = 0;
     for (auto p = this->values.begin(); p != this->values.end(); p++, i++) {
         auto pair = *p;
-        result += pair.first->to_string() + " ";
-        result += pair.second->to_string();
+        result += pair.first->to_string(print_readably) + " ";
+        result += pair.second->to_string(print_readably);
         if (i != size - 1) {
             result += " ";
         }
@@ -293,7 +311,7 @@ bool MALFuncType::isEqualTo(MALTypePtr other)
     return &(*other) == this;
 }
 
-std::string MALFuncType::to_string()
+std::string MALFuncType::to_string(bool print_readably)
 {
     return "<function:" + this->name + ">";
 }
@@ -313,14 +331,14 @@ bool MALBuiltinFuncType::isEqualTo(MALTypePtr other)
     return &(*other) == this;
 }
 
-std::string MALBuiltinFuncType::to_string()
+std::string MALBuiltinFuncType::to_string(bool print_readably)
 {
     return "<builtin:" + this->name + ">";
 }
 
-std::string MALAtomType::to_string()
+std::string MALAtomType::to_string(bool print_readably)
 {
-    return "*" + this->ref->to_string();
+    return "*" + this->ref->to_string(print_readably);
 }
 
 bool MALAtomType::isEqualTo(MALTypePtr other)

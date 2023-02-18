@@ -36,7 +36,7 @@ public:
 
 	static std::string typeToString(Types t);
 
-	virtual std::string to_string() = 0;
+	virtual std::string to_string(bool print_readably) = 0;
 	virtual MALType::Types type() const = 0;
 	virtual const bool isContainer() const = 0;
 	virtual bool isIteratable() { return false; };
@@ -104,7 +104,7 @@ public:
 	virtual MALTypePtr deepCopy() override;
 	virtual bool isEqualTo(MALTypePtr other) override;
 	std::vector<MALTypePtr> values;
-	virtual std::string to_string() override;
+	virtual std::string to_string(bool print_readably) override;
 	virtual MALType::Types type() const override { return  MALType::Types::List; }
 	virtual size_t size() override { return values.size(); };
 	virtual MALTypePtr getAt(size_t pos) override { return values[pos]; };
@@ -121,7 +121,7 @@ public:
 	virtual bool isEqualTo(MALTypePtr other) override;
 	double value;
 	MALNumberType(double value) : value(value) {}
-	virtual std::string to_string() override;
+	virtual std::string to_string(bool print_readably) override;
 	virtual MALType::Types type() const override { return  MALType::Types::Number; }
 };
 
@@ -131,7 +131,7 @@ public:
 	virtual bool isEqualTo(MALTypePtr other) override;
 	std::string name;
 	MALSymbolType(std::string name) : name(name) {}
-	virtual std::string to_string() override;
+	virtual std::string to_string(bool print_readably) override;
 	virtual MALType::Types type() const override { return  MALType::Types::Symbol; }
 };
 
@@ -141,7 +141,7 @@ public:
 	virtual bool isEqualTo(MALTypePtr other) override;
 	std::string value;
 	MALStringType(std::string value) : value(value) {}
-	virtual std::string to_string() override;
+	virtual std::string to_string(bool print_readably) override;
 	virtual MALType::Types type() const override { return  MALType::Types::String; }
 };
 
@@ -149,7 +149,7 @@ class MALNilType : public MALLeafType {
 public:
 	virtual MALTypePtr deepCopy() override;
 	virtual bool isEqualTo(MALTypePtr other) override;
-	virtual std::string to_string() override;
+	virtual std::string to_string(bool print_readably) override;
 	virtual MALType::Types type() const override { return  MALType::Types::Nil; }
 };
 
@@ -159,7 +159,7 @@ public:
 	virtual bool isEqualTo(MALTypePtr other) override;
 	bool value;
 	MALBoolType(bool value) : value(value) {}
-	virtual std::string to_string() override;
+	virtual std::string to_string(bool print_readably) override;
 	virtual MALType::Types type() const override { return  MALType::Types::Bool; }
 };
 
@@ -169,7 +169,7 @@ public:
 	virtual bool isEqualTo(MALTypePtr other) override;
 	std::string value;
 	MalKeywordType(std::string value) : value(value) {}
-	virtual std::string to_string() override;
+	virtual std::string to_string(bool print_readably) override;
 	virtual MALType::Types type() const override { return  MALType::Types::Keyword; }
 };
 
@@ -178,7 +178,7 @@ public:
 	virtual MALTypePtr deepCopy() override;
 	virtual bool isEqualTo(MALTypePtr other) override;
 	std::vector<MALTypePtr> values;
-	virtual std::string to_string() override;
+	virtual std::string to_string(bool print_readably) override;
 	virtual MALType::Types type() const override { return  MALType::Types::Vector; }
 	virtual size_t size() override { return values.size(); };
 	virtual MALTypePtr getAt(size_t pos) override { return values[pos]; };
@@ -205,7 +205,7 @@ public:
 	virtual MALTypePtr deepCopy() override;
 	virtual bool isEqualTo(MALTypePtr other) override;
 	std::unordered_map<MALTypePtr, MALTypePtr, MALTypeHash, MALTypeEqualPred> values;
-	virtual std::string to_string() override;
+	virtual std::string to_string(bool print_readably) override;
 	virtual MALType::Types type() const override { return  MALType::Types::HashMap; }
 	virtual size_t size() override { return values.size(); };
 };
@@ -226,7 +226,7 @@ public:
 	virtual bool isEqualTo(MALTypePtr other) override;
 	MALFuncType(std::string name, std::shared_ptr<Env> env, MALListTypePtr bindingsList, MALTypePtr funcBody) 
 		: MALCallableType(name), env(env), bindingsList(bindingsList), funcBody(funcBody) {}
-	virtual std::string to_string() override;
+	virtual std::string to_string(bool print_readably) override;
 	virtual bool isBuiltin() override { return false; };
 	std::shared_ptr<Env> env;
 	MALListTypePtr bindingsList;
@@ -239,13 +239,13 @@ public:
 	virtual bool isEqualTo(MALTypePtr other) override;
 	MALFunctor fn;
 	MALBuiltinFuncType(std::string name, MALFunctor fn) : MALCallableType(name), fn(fn) {}
-	virtual std::string to_string() override;
+	virtual std::string to_string(bool print_readably) override;
 	virtual bool isBuiltin() override { return true; };
 };
 
 class MALAtomType : public MALLeafType {
 public:
-	virtual std::string to_string() override ;
+	virtual std::string to_string(bool print_readably) override ;
 	virtual bool isEqualTo(MALTypePtr other) override;
 	virtual MALTypePtr deepCopy() override;
 	virtual MALType::Types type() const override { return  MALType::Types::Atom; };

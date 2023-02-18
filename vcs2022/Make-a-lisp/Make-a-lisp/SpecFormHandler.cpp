@@ -10,11 +10,11 @@ std::shared_ptr<HandleSpecialFormResult> handleLetStart(MALListTypePtr astList, 
     }
     auto bindingList = std::dynamic_pointer_cast<MALSequenceType>(astList->values[1]);
     if (bindingList->size() % 2 != 0) {
-        throw std::runtime_error("ERROR: Mismatched number of elements in binding list: '" + bindingList->to_string() + "'.");
+        throw std::runtime_error("ERROR: Mismatched number of elements in binding list: '" + bindingList->to_string(true) + "'.");
     }
     for (int i = 0; i < bindingList->size(); i += 2) {
         if (bindingList->getAt(i)->type() != MALType::Types::Symbol) {
-            throw std::runtime_error("ERROR: First element in a binding pair must be a symbol. Found '" + bindingList->getAt(i)->to_string() + "' instead.");
+            throw std::runtime_error("ERROR: First element in a binding pair must be a symbol. Found '" + bindingList->getAt(i)->to_string(true) + "' instead.");
         }
         auto symbol = std::dynamic_pointer_cast<MALSymbolType>(bindingList->getAt(i));
         auto evaledValue = EVAL(bindingList->getAt(i + 1), newEnv);
@@ -96,13 +96,13 @@ std::shared_ptr<HandleSpecialFormResult> handleClosure(MALListTypePtr astList, E
     */
     checkArgsIs("fn*", astList, 3, astList->values.size());
     if (astList->values[1]->type() != MALType::Types::List) {
-        throw std::runtime_error("Error: First parameter of 'fn*' must be a list or vector. Found: " + astList->values[1]->to_string());
+        throw std::runtime_error("Error: First parameter of 'fn*' must be a list or vector. Found: " + astList->values[1]->to_string(true));
     }
     auto bindingsList = std::dynamic_pointer_cast<MALListType>(astList->values[1]);
     for (auto p = bindingsList->values.begin(); p != bindingsList->values.end(); p++) {
         auto element = *p;
         if (element->type() != MALType::Types::Symbol) {
-            throw std::runtime_error("ERROR: All elements of the binding list of 'fn*' must be symbols. Found: " + element->to_string());
+            throw std::runtime_error("ERROR: All elements of the binding list of 'fn*' must be symbols. Found: " + element->to_string(true));
         }
     }
 
@@ -113,7 +113,7 @@ std::shared_ptr<HandleSpecialFormResult> handleClosure(MALListTypePtr astList, E
         return result;
     };*/
     auto func = std::shared_ptr<MALFuncType>(new MALFuncType(
-        astList->to_string(),
+        astList->to_string(true),
         env,
         bindingsList,
         funcBody
