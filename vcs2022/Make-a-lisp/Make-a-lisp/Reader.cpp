@@ -208,6 +208,34 @@ MALTypePtr read_atom(Reader& reader)
     else if (token[0] == ':') {
         return std::shared_ptr<MalKeywordType>(new MalKeywordType(token.substr(1)));
     }
+
+    else if (token[0] == '\'') {
+        auto result = MALListTypePtr(new MALListType);
+        result->values.push_back(MALSymbolTypePtr(new MALSymbolType("quote")));
+        result->values.push_back(read_form(reader));
+        return result;
+    }
+    else if (token[0] == '`') {
+        auto result = MALListTypePtr(new MALListType);
+        result->values.push_back(MALSymbolTypePtr(new MALSymbolType("quasiquote")));
+        result->values.push_back(read_form(reader));
+        return result;
+    }
+    else if (token[0] == '~') {
+        if (token == "~@") {
+            auto result = MALListTypePtr(new MALListType);
+            result->values.push_back(MALSymbolTypePtr(new MALSymbolType("splice-unquote")));
+            result->values.push_back(read_form(reader));
+            return result;
+        }
+        else {
+            auto result = MALListTypePtr(new MALListType);
+            result->values.push_back(MALSymbolTypePtr(new MALSymbolType("unquote")));
+            result->values.push_back(read_form(reader));
+            return result;
+        }
+    }
+
     else if (token == "true") {
         return std::shared_ptr<MALBoolType>(new MALBoolType(true));
     }

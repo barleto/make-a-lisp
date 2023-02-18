@@ -238,7 +238,7 @@ MALTypePtr concatList(std::vector<MALTypePtr> args, EnvPtr env) {
     MALListTypePtr newList(new MALListType());
     for (auto p = args.begin(); p != args.end(); p++) {
         if (!(*p)->isSequence()) {
-            throw std::runtime_error("Error: Second parameter of 'cons' must be a sequence (e.g. list or vector). Found: " + (*p)->to_string(true));
+            throw std::runtime_error("Error: All parameters of 'concat' must be a sequence (e.g. list or vector). Found: " + (*p)->to_string(true));
         }
         auto argAsSequence = (*p)->asSequence();
         for (int i = 0; i < argAsSequence->size(); i++) {
@@ -274,6 +274,22 @@ MALTypePtr str(std::vector<MALTypePtr> args, EnvPtr env) {
     return std::shared_ptr<MALStringType>(new MALStringType(result));
 }
 
+MALTypePtr vec(std::vector<MALTypePtr> args, EnvPtr env) {
+    auto result = std::shared_ptr<MALVectorType>(new MALVectorType());
+    if (args.size() <= 0) {
+        return result;
+    }
+
+    if (!args[0]->isSequence()) {
+        throw std::runtime_error("Error: Parameter of 'vec' must be a sequence (e.g. list or vector). Found: " + args[0]->to_string(true));
+    }
+    auto argAsSequence = args[0]->asSequence();
+    for (int i = 0; i < argAsSequence->size(); i++) {
+        result->values.push_back(argAsSequence->getAt(i));
+    }
+    return result;
+}
+
 std::map<std::string, MALFunctor> ns = {
     {"+", add},
     {"-", sub},
@@ -303,6 +319,7 @@ std::map<std::string, MALFunctor> ns = {
     {"concat", concatList},
     {"pr-str", pr_str_func},
     {"str", str},
+    {"vec", vec},
 };
 
 void addBuiltInOperationsToEnv(EnvPtr env)

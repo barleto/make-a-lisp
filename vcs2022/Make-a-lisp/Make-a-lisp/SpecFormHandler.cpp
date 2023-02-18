@@ -126,13 +126,13 @@ std::shared_ptr<HandleSpecialFormResult> handleQuote(MALListTypePtr astList, Env
     return result;
 }
 
-MALTypePtr quasiquote(MALTypePtr ast) {
+MALTypePtr quasiquote(MALTypePtr ast, bool ignoreUnquote = false) {
     auto astAsList = ast->asList();
     std::shared_ptr<MALSymbolType> argAsSymbol(nullptr);
     std::shared_ptr<MALListType> argAsList(nullptr);
     if (ast->type() == MALType::Types::List)
     {
-        if (astAsList->size() > 0 && astAsList->values[0]->tryAsSymbol(argAsSymbol) && argAsSymbol->name == "unquote") {
+        if (astAsList->size() > 0 && astAsList->values[0]->tryAsSymbol(argAsSymbol) && argAsSymbol->name == "unquote" && !ignoreUnquote) {
             return astAsList->values[1];
         }
         else {
@@ -155,7 +155,19 @@ MALTypePtr quasiquote(MALTypePtr ast) {
             }
             return result;
         }
-    } else if (ast->type() == MALType::Types::HashMap || ast->type() == MALType::Types::Symbol) {
+    }
+    else if (ast->type() == MALType::Types::Vector) {
+        MALListTypePtr result(new MALListType());
+        result->values.push_back(MALSymbolTypePtr(new MALSymbolType("vec")));
+        MALListTypePtr vector2List(new MALListType());
+        auto vector = ast->asSequence();
+        for (int i = 0; i < vector->size(); i++) {
+            vector2List->values.push_back(vector->getAt(i));
+        }
+        result->values.push_back(quasiquote(vector2List, true));
+        return result;
+    }
+    else if (ast->type() == MALType::Types::HashMap || ast->type() == MALType::Types::Symbol) {
         MALListTypePtr result(new MALListType());
         result->values.push_back(MALSymbolTypePtr(new MALSymbolType("quote")));
         result->values.push_back(ast);
