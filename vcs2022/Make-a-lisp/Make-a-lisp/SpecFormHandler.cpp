@@ -5,7 +5,7 @@ std::shared_ptr<HandleSpecialFormResult> handleLetStart(MALListTypePtr astList, 
 {
     checkArgsIsAtLeast("let*", astList, 3, astList->values.size());
     EnvPtr newEnv(new Env(env));
-    if (!astList->values[1]->isIteratable()) {
+    if (!astList->values[1]->isSequence()) {
         throw std::runtime_error("ERROR: 'let*' binding list must be of type list or vector.");
     }
     auto bindingList = std::dynamic_pointer_cast<MALSequenceType>(astList->values[1]);
@@ -95,23 +95,18 @@ std::shared_ptr<HandleSpecialFormResult> handleClosure(MALListTypePtr astList, E
     Use the result as the return value of the closure.
     */
     checkArgsIs("fn*", astList, 3, astList->values.size());
-    if (astList->values[1]->type() != MALType::Types::List) {
-        throw std::runtime_error("Error: First parameter of 'fn*' must be a list or vector. Found: " + astList->values[1]->to_string(true));
+    if (!astList->values[1]->isSequence()) {
+        throw std::runtime_error("Error: First parameter of 'fn*' must be a sequence (e.g. list or vector). Found: " + astList->values[1]->to_string(true));
     }
-    auto bindingsList = std::dynamic_pointer_cast<MALListType>(astList->values[1]);
-    for (auto p = bindingsList->values.begin(); p != bindingsList->values.end(); p++) {
-        auto element = *p;
+    auto bindingsList = astList->values[1]->asSequence();
+    for (auto i = 0; i < bindingsList->size(); i++) {
+        auto element = bindingsList->getAt(i);
         if (element->type() != MALType::Types::Symbol) {
             throw std::runtime_error("ERROR: All elements of the binding list of 'fn*' must be symbols. Found: " + element->to_string(true));
         }
     }
 
-    auto funcBody = astList->values[2]; //also called AST
-    /*auto lambda = (MALFunctor)[env, bindingsList, funcBody](std::vector<MALTypePtr> args) -> MALTypePtr {
-        EnvPtr newEnv(new Env(env, bindingsList, args));
-        auto result = EVAL(funcBody, newEnv);
-        return result;
-    };*/
+    auto funcBody = astList->values[2]; //also called the "ast"
     auto func = std::shared_ptr<MALFuncType>(new MALFuncType(
         astList->to_string(true),
         env,

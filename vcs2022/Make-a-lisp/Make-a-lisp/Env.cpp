@@ -4,12 +4,12 @@ std::shared_ptr<MALSymbolType> listArgsSymbol(new MALSymbolType("&"));
 
 Env::Env(EnvPtr outer) : outer(outer) {}
 
-Env::Env(EnvPtr outer, MALListTypePtr bindings, std::vector<MALTypePtr> exprs) : outer(outer)
+Env::Env(EnvPtr outer, std::shared_ptr<MALSequenceType> bindings, std::vector<MALTypePtr> exprs) : outer(outer)
 {
     bool foundSpecialChar = false;
     int realBindingsSize = 0;
     for (int i = 0; i < bindings->size(); i++) {
-        auto symbol = std::dynamic_pointer_cast<MALSymbolType>(bindings->values[i]);
+        auto symbol = bindings->getAt(i)->asSymbol();
         if (symbol->isEqualTo(listArgsSymbol)) {
             break;
         }
@@ -19,7 +19,7 @@ Env::Env(EnvPtr outer, MALListTypePtr bindings, std::vector<MALTypePtr> exprs) :
         throw std::runtime_error("Error: Number of parameters don't match function's parameters list size.");
     }
     for (int i = 0; i < bindings->size(); i++) {
-        auto symbol = std::dynamic_pointer_cast<MALSymbolType>(bindings->values[i]);
+        auto symbol = bindings->getAt(i)->asSymbol();
         if (symbol->isEqualTo(listArgsSymbol)) {
             if (i + 1 >= bindings->size()) {
                 throw std::runtime_error("Error: Missing binding name after special character '&'");
@@ -28,11 +28,11 @@ Env::Env(EnvPtr outer, MALListTypePtr bindings, std::vector<MALTypePtr> exprs) :
             for (int j = i; j < exprs.size(); j++) {
                 argsList->values.push_back(exprs[j]);
             }
-            auto argsListSym = std::dynamic_pointer_cast<MALSymbolType>(bindings->values[i + 1]);
+            auto argsListSym = bindings->getAt(i + 1)->asSymbol();
             this->set(argsListSym, argsList);
             return;
         }
-        this->set(std::dynamic_pointer_cast<MALSymbolType>(bindings->values[i]), exprs[i]);
+        this->set(bindings->getAt(i)->asSymbol(), exprs[i]);
     }
 }
 

@@ -83,12 +83,7 @@ std::string MALListType::to_string(bool print_readably)
             result += " ";
         }
     }
-    if (this->isVector) {
-        return "[" + result + "]";
-    }
-    else {
-        return "(" + result + ")";
-    }
+    return "(" + result + ")";
 }
 
 MALTypePtr MALNumberType::deepCopy() {

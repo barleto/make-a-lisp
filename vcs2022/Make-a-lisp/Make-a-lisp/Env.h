@@ -31,7 +31,7 @@ class Env {
 	EnvPtr outer = nullptr;
 public:
 	Env(EnvPtr outer = nullptr);
-	Env(EnvPtr outer, MALListTypePtr bindings, std::vector<MALTypePtr> exprs);
+	Env(EnvPtr outer, std::shared_ptr<MALSequenceType> bindings, std::vector<MALTypePtr> exprs);
 	// takes a symbol key and a mal value and adds to the data structure
 	void set(MALSymbolTypePtr symbol, MALTypePtr funType);
 	/*takes a symbol key and if the current environment contains that key then return the environment. 

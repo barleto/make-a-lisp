@@ -64,7 +64,7 @@ MALTypePtr EVAL(MALTypePtr ast, EnvPtr env) {
     EnvPtr currentEnv = env;
     MALTypePtr currentAst = ast;
     for (;;) {
-        if (currentAst->type() != MALType::Types::List || currentAst->asList()->isVector) {
+        if (currentAst->type() != MALType::Types::List) {
             return eval_ast(currentAst, currentEnv);
         }
         auto astAsList = std::dynamic_pointer_cast<MALListType>(currentAst);

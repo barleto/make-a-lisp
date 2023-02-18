@@ -16,6 +16,7 @@
 class Env;
 class MALSymbolType;
 class MALListType;
+class MALSequenceType;
 
 class MALType : public std::enable_shared_from_this<MALType>
 {
@@ -39,7 +40,7 @@ public:
 	virtual std::string to_string(bool print_readably) = 0;
 	virtual MALType::Types type() const = 0;
 	virtual const bool isContainer() const = 0;
-	virtual bool isIteratable() { return false; };
+	virtual bool isSequence() { return false; };
 	virtual bool isEqualTo(MALTypePtr other) = 0;
 	virtual MALTypePtr deepCopy() = 0;
 
@@ -68,6 +69,13 @@ public:
 		return std::dynamic_pointer_cast<MALSymbolType>(this->shared_from_this());
 	}
 
+	std::shared_ptr<MALSequenceType> asSequence() {
+		if (!isSequence()) {
+			return nullptr;
+		}
+		return std::dynamic_pointer_cast<MALSequenceType>(this->shared_from_this());
+	}
+
 	std::shared_ptr<MALListType> asList() {
 		if (type() != Types::List) {
 			return nullptr;
@@ -92,7 +100,7 @@ public:
 class MALSequenceType : public MALContainerType
 {
 public:
-	virtual bool isIteratable() override { return true; };
+	virtual bool isSequence() override { return true; };
 	virtual MALTypePtr getAt(size_t pos) = 0;
 	virtual void setAt(size_t pos, MALTypePtr value) = 0;
 	virtual void push_back(MALTypePtr value) = 0;
@@ -109,7 +117,6 @@ public:
 	virtual size_t size() override { return values.size(); };
 	virtual MALTypePtr getAt(size_t pos) override { return values[pos]; };
 	virtual void setAt(size_t pos, MALTypePtr value) { values[pos] = value; };
-	bool isVector;
 	virtual void push_back(MALTypePtr value) override {
 		this->values.push_back(value);
 	}
@@ -224,12 +231,12 @@ class MALFuncType : public MALCallableType {
 public:
 	virtual MALTypePtr deepCopy() override;
 	virtual bool isEqualTo(MALTypePtr other) override;
-	MALFuncType(std::string name, std::shared_ptr<Env> env, MALListTypePtr bindingsList, MALTypePtr funcBody) 
+	MALFuncType(std::string name, std::shared_ptr<Env> env, std::shared_ptr<MALSequenceType> bindingsList, MALTypePtr funcBody)
 		: MALCallableType(name), env(env), bindingsList(bindingsList), funcBody(funcBody) {}
 	virtual std::string to_string(bool print_readably) override;
 	virtual bool isBuiltin() override { return false; };
 	std::shared_ptr<Env> env;
-	MALListTypePtr bindingsList;
+	std::shared_ptr<MALSequenceType> bindingsList;
 	MALTypePtr funcBody;
 };
 

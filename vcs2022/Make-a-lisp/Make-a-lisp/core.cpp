@@ -222,21 +222,27 @@ MALTypePtr evalSpecialForm(std::vector<MALTypePtr> args, EnvPtr env) {
 
 MALTypePtr cons(std::vector<MALTypePtr> args, EnvPtr env) {
     checkArgsNumber("cons", 2, args.size());
-    assertMalType(args[1], MALType::Types::List);
-    auto arg2List = args[1]->asList();
+    if (!args[1]->isSequence()) {
+        throw std::runtime_error("Error: Second parameter of 'cons' must be a sequence (e.g. list or vector). Found: " + args[1]->to_string(true));
+    }
+    auto argAsSequence = args[1]->asSequence();
     MALListTypePtr newList(new MALListType());
     newList->values.push_back(args[0]);
-    newList->values.insert(newList->values.end(), arg2List->values.begin(), arg2List->values.end());
+    for (int i = 0; i < argAsSequence->size(); i++) {
+        newList->values.push_back(argAsSequence->getAt(i));
+    }
     return newList;
 }
 
 MALTypePtr concatList(std::vector<MALTypePtr> args, EnvPtr env) {
     MALListTypePtr newList(new MALListType());
     for (auto p = args.begin(); p != args.end(); p++) {
-        assertMalType(*p, MALType::Types::List);
-        auto arg2List = std::dynamic_pointer_cast<MALListType>(*p);
-        for (auto pp = arg2List->values.begin(); pp != arg2List->values.end(); pp++) {
-            newList->values.push_back(*pp);
+        if (!(*p)->isSequence()) {
+            throw std::runtime_error("Error: Second parameter of 'cons' must be a sequence (e.g. list or vector). Found: " + (*p)->to_string(true));
+        }
+        auto argAsSequence = (*p)->asSequence();
+        for (int i = 0; i < argAsSequence->size(); i++) {
+            newList->values.push_back(argAsSequence->getAt(i));
         }
     }
     return newList;
