@@ -41,7 +41,7 @@ MALTypePtr divs(std::vector<MALTypePtr> args, EnvPtr env) {
 }
 
 MALTypePtr prn(std::vector<MALTypePtr> args, EnvPtr env) {
-    auto nil = std::shared_ptr<MALNilType>(new MALNilType());
+    auto nil = MALNilType::Nil;
     if (args.size() <= 0) {
         return nil;
     }
@@ -56,7 +56,7 @@ MALTypePtr prn(std::vector<MALTypePtr> args, EnvPtr env) {
 }
 
 MALTypePtr println(std::vector<MALTypePtr> args, EnvPtr env) {
-    auto nil = std::shared_ptr<MALNilType>(new MALNilType());
+    auto nil = MALNilType::Nil;
     if (args.size() <= 0) {
         return nil;
     }
@@ -183,7 +183,7 @@ MALTypePtr deref(std::vector<MALTypePtr> args, EnvPtr env) {
     assertMalType(args[0], MALType::Types::Atom);
     auto atom = std::dynamic_pointer_cast<MALAtomType>(args[0]);
     if (atom->ref == nullptr) {
-        return std::shared_ptr<MALNilType>(new MALNilType());
+        return MALNilType::Nil;
     }
     return atom->ref;
 }
@@ -290,6 +290,55 @@ MALTypePtr vec(std::vector<MALTypePtr> args, EnvPtr env) {
     return result;
 }
 
+MALTypePtr nthFunc(std::vector<MALTypePtr> args, EnvPtr env) {
+    checkArgsIsAtLeast("nthFunc", 2, args.size());
+    assertMalType(args[1], MALType::Types::Number);
+    auto index = std::dynamic_pointer_cast<MALNumberType>(args[1])->value;
+    std::shared_ptr<MALSequenceType> astAsSequence;
+    if (!args[0]->tryAsSequence(astAsSequence)) {
+        throw std::runtime_error("Error: First parameter of 'nth' must be a sequence (e.g. list or vector). Found: " + args[0]->to_string(true));
+    }
+    if (index >= astAsSequence->size() || index < 0) {
+        throw std::runtime_error("Error: Index '"+std::to_string((int)index)+"' is not a valid index of sequence" + astAsSequence->to_string(true));
+    }
+    return astAsSequence->getAt(index);
+}
+
+MALTypePtr firstFunc(std::vector<MALTypePtr> args, EnvPtr env) {
+    checkArgsIsAtLeast("firstFunc", 1, args.size());
+    std::shared_ptr<MALSequenceType> astAsSequence;
+    if (args[0]->type() == MALType::Types::Nil) {
+        return MALNilType::Nil;
+    }
+    if (!args[0]->tryAsSequence(astAsSequence)) {
+        throw std::runtime_error("Error: Parameter of 'first' must be a sequence (e.g. list or vector). Found: " + args[0]->to_string(true));
+    }
+    if (astAsSequence->size() <= 0) {
+        return MALNilType::Nil;
+    }
+    return astAsSequence->getAt(0);
+}
+
+MALTypePtr restFunc(std::vector<MALTypePtr> args, EnvPtr env) {
+    checkArgsIsAtLeast("restFunc", 1, args.size());
+    std::shared_ptr<MALSequenceType> astAsSequence;
+    MALListTypePtr newList = MALListTypePtr(new MALListType());
+    if (args[0]->type() == MALType::Types::Nil) {
+        return newList;
+    }
+    if (!args[0]->tryAsSequence(astAsSequence)) {
+        throw std::runtime_error("Error: Parameter of 'first' must be a sequence (e.g. list or vector). Found: " + args[0]->to_string(true));
+    }
+    if (astAsSequence->size() <= 0) {
+        return newList;
+    }
+    for (int i = 1; i < astAsSequence->size(); i++) {
+        newList->push_back(astAsSequence->getAt(i));
+    }
+    return newList;
+}
+
+
 std::map<std::string, MALFunctor> ns = {
     {"+", add},
     {"-", sub},
@@ -320,6 +369,9 @@ std::map<std::string, MALFunctor> ns = {
     {"pr-str", pr_str_func},
     {"str", str},
     {"vec", vec},
+    {"nth", nthFunc},
+    {"first", firstFunc},
+    {"rest", restFunc},
 };
 
 void addBuiltInOperationsToEnv(EnvPtr env)

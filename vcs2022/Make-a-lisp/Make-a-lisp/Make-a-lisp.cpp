@@ -110,7 +110,12 @@ MALTypePtr EVAL(MALTypePtr ast, EnvPtr env) {
 }
 
 void PRINT(MALTypePtr result) {
-    std::cout << "\033[32m=> " << pr_str(result, true) << "\033[0m" << std::endl;
+    if (result->type() == MALType::Types::String) {
+        std::cout << "\033[32m=> \"" << pr_str(result, true) << "\"\033[0m" << std::endl;
+    }
+    else {
+        std::cout << "\033[32m=> " << pr_str(result, true) << "\033[0m" << std::endl;
+    }
 }
 MALTypePtr readEval(std::string input, EnvPtr env) {
     auto ast = READ(input);
@@ -136,6 +141,7 @@ void installBuiltInOps(EnvPtr env)
     readEval("(def! not (fn* (a) (if a false true)))", env);
     readEval("(def! load-file (fn* (filename) \
         (eval (read-string (str \"(do \" (slurp filename) \"\nnil)\")))))", env);
+    readEval("(defmacro! cond (fn* (& xs) (if (> (count xs) 0) (list 'if (first xs) (if (> (count xs) 1) (nth xs 1) (throw \"odd number of forms to cond\")) (cons 'cond (rest (rest xs)))))))", env);
 }
 
 void installBuiltInSymbols(EnvPtr env, int argc, char* argv[])

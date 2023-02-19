@@ -43,7 +43,7 @@ std::shared_ptr<HandleSpecialFormResult> handleDefBang(MALListTypePtr astList, E
 std::shared_ptr<HandleSpecialFormResult> handleDo(MALListTypePtr astList, EnvPtr env)
 {
     if (astList->size() <= 1) {
-        auto sfr = new HandleSpecialFormResult{ false, env, std::shared_ptr<MALType>(new MALNilType()) };
+        auto sfr = new HandleSpecialFormResult{ false, env, MALNilType::Nil };
         std::shared_ptr<HandleSpecialFormResult> result(sfr);
         return result;
     }
@@ -51,7 +51,7 @@ std::shared_ptr<HandleSpecialFormResult> handleDo(MALListTypePtr astList, EnvPtr
     for (int i = 1; i < astList->values.size() - 1; i++) {
         EVAL(astList->values[i], env);
     }
-    MALTypePtr lastValue(astList->values.size() > 0 ? astList->values[astList->values.size() - 1] : std::shared_ptr<MALType>(new MALNilType()));
+    MALTypePtr lastValue(astList->values.size() > 0 ? astList->values[astList->values.size() - 1] : MALNilType::Nil);
 
     auto sfr = new HandleSpecialFormResult{ true, env, lastValue };
     std::shared_ptr<HandleSpecialFormResult> result(sfr);
@@ -75,7 +75,7 @@ std::shared_ptr<HandleSpecialFormResult> handleIf(MALListTypePtr astList, EnvPtr
         astToEval = astList->values[2];
     }
     else if (astList->values.size() <= 3) { //if false bu there's nof alse branch, retunr nil
-        astToEval = MALTypePtr(new MALNilType());
+        astToEval = MALNilType::Nil;
     } else{ //continue eval on false branch
         astToEval = astList->values[3];
     }
@@ -192,7 +192,74 @@ std::shared_ptr<HandleSpecialFormResult> handleQuasiquote(MALListTypePtr astList
     return result;
 }
 
+bool isMacroCall(MALTypePtr ast, EnvPtr env) {
+    MALListTypePtr astAsList;
+    MALSymbolTypePtr astAsSymbol;
+    std::shared_ptr<MALCallableType> astAsCallable;
+    if (ast->tryAsList(astAsList) && astAsList->size() > 0 && astAsList->getAt(0)->tryAsSymbol(astAsSymbol)) {
+        auto envValue = env->find(astAsSymbol);
+        return envValue != nullptr && envValue->tryAsCallable(astAsCallable) && astAsCallable->is_macro;
+    }
+    return false;
+}
+
+MALTypePtr macroexpand(MALTypePtr ast, EnvPtr env) {
+    MALListTypePtr astAsList;
+    MALSymbolTypePtr astAsSymbol;
+    std::shared_ptr<MALCallableType> astAsCallable;
+    while (isMacroCall(ast, env)) {
+        if (!ast->tryAsList(astAsList)) {
+            throw std::runtime_error("ERROR: Macroexpand: ast is not a list.");
+        }
+        if (!astAsList->getAt(0)->tryAsSymbol(astAsSymbol)) {
+            throw std::runtime_error("ERROR: Macroexpand: first element needs to be a Symbol.");
+        }
+        auto envValue = env->get(astAsSymbol);
+        if (!envValue->tryAsCallable(astAsCallable)) {
+            throw std::runtime_error("ERROR: Macroexpand: Value of key '" + astAsSymbol->to_string(true) + "' it's not a function bu it must be.");
+        }
+        MALListTypePtr args(new MALListType());
+        for (int i = 1; i < astAsList->size(); i++) {
+            args->push_back(astAsList->getAt(i));
+        }
+        auto func = std::dynamic_pointer_cast<MALFuncType>(astAsCallable);
+        EnvPtr newEnv(new Env(func->env, func->bindingsList, args->values));
+        ast = EVAL(func->funcBody, newEnv);
+    }
+    return ast;
+}
+
+std::shared_ptr<HandleSpecialFormResult> handleDefMacro(MALListTypePtr astList, EnvPtr env) {
+    /* This is very similar to the def! form, but before the evaluated value (mal function) 
+    is set in the environment, the is_macro attribute should be set to true.*/
+    checkArgsIs("defmacro!", astList, 2, astList->values.size() - 1);
+    if (astList->values[1]->type() != MALType::Types::Symbol) {
+        throw std::runtime_error("ERROR: 'defmacro!' first param must be a symbol.");
+    }
+    auto symbol = std::dynamic_pointer_cast<MALSymbolType>(astList->values[1]);
+    auto evaledValue = EVAL(astList->values[2], env);
+    env->set(symbol, evaledValue);
+    evaledValue->is_macro = true;
+    auto sfr = new HandleSpecialFormResult{ false, env, evaledValue };
+    std::shared_ptr<HandleSpecialFormResult> result(sfr);
+    return result;
+
+}
+
+std::shared_ptr<HandleSpecialFormResult> handleMacroexpand(MALListTypePtr astList, EnvPtr env) {
+    checkArgsNumber("macroexpand", 1, astList->size() - 1);
+    auto sfr = new HandleSpecialFormResult{ false, env, macroexpand(astList->values[1], env) };
+    std::shared_ptr<HandleSpecialFormResult> result(sfr);
+    return result;
+}
+
 std::shared_ptr<HandleSpecialFormResult> handleSpecialForms(MALListTypePtr astList, EnvPtr env) {
+    auto macroedAstList = macroexpand(astList, env);
+    if (!macroedAstList->tryAsList(astList) || astList->size() <= 0) {
+        auto sfr = new HandleSpecialFormResult{ false, env, eval_ast(macroedAstList, env) };
+        std::shared_ptr<HandleSpecialFormResult> result(sfr);
+        return result;
+    }
     auto lookupSymbol = std::dynamic_pointer_cast<MALSymbolType>(astList->values[0]);
     if (lookupSymbol->name == "def!") {
         return handleDefBang(astList, env);
@@ -217,6 +284,12 @@ std::shared_ptr<HandleSpecialFormResult> handleSpecialForms(MALListTypePtr astLi
     }
     else if (lookupSymbol->name == "quasiquoteexpand") {
         return handleQuasiquoteExpand(astList, env);
+    }
+    else if (lookupSymbol->name == "defmacro!") {
+        return handleDefMacro(astList, env);
+    }
+    else if (lookupSymbol->name == "macroexpand") {
+        return handleMacroexpand(astList, env);
     }
     auto sfr = new HandleSpecialFormResult{ false, env, nullptr };
     std::shared_ptr<HandleSpecialFormResult> result(sfr);

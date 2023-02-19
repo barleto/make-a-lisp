@@ -58,7 +58,7 @@ void tokenize(std::string& input, Reader& reader)
 MALTypePtr read_form(Reader& reader)
 {
     if (reader.tokens.size() <= 0) {
-        return std::shared_ptr<MALNilType>(new MALNilType());
+        return MALNilType::Nil;
     }
     auto token = reader.peek();
     switch (token[0])
@@ -243,7 +243,7 @@ MALTypePtr read_atom(Reader& reader)
         return std::shared_ptr<MALBoolType>(new MALBoolType(false));
     }
     else if (token == "nil") {
-        return std::shared_ptr<MALNilType>(new MALNilType());
+        return MALNilType::Nil;
     }
     else {
         return std::shared_ptr<MALSymbolType>(new MALSymbolType(token));

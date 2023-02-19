@@ -17,6 +17,7 @@ class Env;
 class MALSymbolType;
 class MALListType;
 class MALSequenceType;
+class MALCallableType;
 
 class MALType : public std::enable_shared_from_this<MALType>
 {
@@ -37,6 +38,7 @@ public:
 
 	static std::string typeToString(Types t);
 
+	bool is_macro;
 	virtual std::string to_string(bool print_readably) = 0;
 	virtual MALType::Types type() const = 0;
 	virtual const bool isContainer() const = 0;
@@ -59,6 +61,24 @@ public:
 			return false;
 		}
 		ptr = std::dynamic_pointer_cast<MALListType>(this->shared_from_this());
+		return true;
+	}
+
+	bool tryAsCallable(std::shared_ptr<MALCallableType>& ptr) {
+		if (type() != Types::Function) {
+			ptr = nullptr;
+			return false;
+		}
+		ptr = std::dynamic_pointer_cast<MALCallableType>(this->shared_from_this());
+		return true;
+	}
+
+	bool tryAsSequence(std::shared_ptr<MALSequenceType>& ptr) {
+		if (!isSequence()) {
+			ptr = nullptr;
+			return false;
+		}
+		ptr = std::dynamic_pointer_cast<MALSequenceType>(this->shared_from_this());
 		return true;
 	}
 
@@ -158,6 +178,7 @@ public:
 	virtual bool isEqualTo(MALTypePtr other) override;
 	virtual std::string to_string(bool print_readably) override;
 	virtual MALType::Types type() const override { return  MALType::Types::Nil; }
+	static std::shared_ptr<MALNilType> Nil;
 };
 
 class MALBoolType : public MALLeafType {

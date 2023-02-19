@@ -1,5 +1,7 @@
 #include "Type.h"
 
+std::shared_ptr<MALNilType> MALNilType::Nil = std::shared_ptr<MALNilType>(new MALNilType());
+
 static void replaceAll(std::string& input, std::string match, std::string replaceWith) {
     int i = 0;
     while (input.find(match, i) != std::string::npos) {
@@ -154,7 +156,7 @@ std::string MALStringType::to_string(bool print_readably)
 }
 
 MALTypePtr MALNilType::deepCopy() {
-    return std::shared_ptr<MALNilType>(new MALNilType());
+    return MALNilType::Nil;
 }
 
 bool MALNilType::isEqualTo(MALTypePtr other)
