@@ -267,11 +267,9 @@ std::shared_ptr<HandleSpecialFormResult> handleTryCatch(MALListTypePtr astList, 
     if (!(astAsList->getAt(1)->tryAsSymbol(astAsSymbol))) {
         throw std::runtime_error("ERROR: try* second parameter must be a list of size 3, with its second element being a symbol");
     }
-    if (!(astAsList->getAt(2)->tryAsList(astAsList))) {
-        throw std::runtime_error("ERROR: try* second parameter must be a list of size 3, with its third element being a list");
-    }
+
     auto catchBindingValue = astAsSymbol;
-    auto catchBody = astAsList;
+    auto catchBody = astAsList->getAt(2);
 
     auto sfr = new HandleSpecialFormResult{ false, env, astList->values[1] };
     std::shared_ptr<MALType> error(new MALStringType(""));
@@ -285,13 +283,13 @@ std::shared_ptr<HandleSpecialFormResult> handleTryCatch(MALListTypePtr astList, 
         error = e.errorValue;
     }
     catch (std::string& e) {
-        errorAsString->value = e + ", in:\n\t" + astList->values[1]->to_string(true);
+        errorAsString->value = e + ", in:\n\t" + astList->values[1]->to_string(false);
     }
     catch (std::exception& e) {
-        errorAsString->value = std::string(e.what()) + ", in:\n\t" + astList->values[1]->to_string(true);
+        errorAsString->value = std::string(e.what()) + ", in:\n\t" + astList->values[1]->to_string(false);
     }
     catch (...) {
-        errorAsString->value = "Unknown error. Something went wrong running:\n\t" + astList->values[1]->to_string(true);
+        errorAsString->value = "Unknown error. Something went wrong running:\n\t" + astList->values[1]->to_string(false);
     }
     //If execution reach this, we had an exception.
     sfr->ast = catchBody; //run catch body

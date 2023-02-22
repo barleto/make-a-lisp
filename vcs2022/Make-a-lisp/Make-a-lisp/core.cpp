@@ -299,7 +299,7 @@ MALTypePtr nthFunc(std::vector<MALTypePtr> args, EnvPtr env) {
         throw std::runtime_error("Error: First parameter of 'nth' must be a sequence (e.g. list or vector). Found: " + args[0]->to_string(true));
     }
     if (index >= astAsSequence->size() || index < 0) {
-        throw std::runtime_error("Error: Index '"+std::to_string((int)index)+"' is not a valid index of sequence" + astAsSequence->to_string(true));
+        throw std::runtime_error("Error: Index '"+std::to_string((int)index)+"' is not a valid index of sequence '" + astAsSequence->to_string(true) + "'");
     }
     return astAsSequence->getAt(index);
 }
@@ -339,10 +339,70 @@ MALTypePtr restFunc(std::vector<MALTypePtr> args, EnvPtr env) {
 }
 
 MALTypePtr throwFunc(std::vector<MALTypePtr> args, EnvPtr env) {
-    checkArgsIsAtLeast("throw", 1, args.size());
+    checkArgsNumber("throw", 1, args.size());
     throw MALException(args[0]);
 }
 
+MALTypePtr applyFunc(std::vector<MALTypePtr> args, EnvPtr env) {
+    checkArgsIsAtLeast("apply", 1, args.size());
+    assertMalType(args[0], MALType::Types::Function);
+    MALListTypePtr result(new MALListType());
+    result->values.push_back(args[0]);
+    std::shared_ptr<MALSequenceType> astAsSequence;
+    for (int i = 1; i < args.size(); i++) {
+        if (args[i]->tryAsSequence(astAsSequence)) {
+            for (int j = 0; j < astAsSequence->size(); j++) {
+                result->values.push_back(astAsSequence->getAt(j));
+            }
+        }
+        else {
+            result->values.push_back(args[i]);
+        }
+    }
+    return EVAL(result, env);
+}
+
+MALTypePtr mapFunc(std::vector<MALTypePtr> args, EnvPtr env) {
+    checkArgsNumber("map", 2, args.size());
+    assertMalType(args[0], MALType::Types::Function);
+    std::shared_ptr<MALSequenceType> astAsSequence;
+    if (!args[1]->tryAsSequence(astAsSequence)) {
+        throw std::runtime_error("ERROR: Second parameter of 'map' must be a sequence.");
+    }
+    MALListTypePtr result(new MALListType());
+    MALListTypePtr funcCall(new MALListType());
+    funcCall->values.push_back(args[0]);
+    funcCall->values.push_back(args[0]);
+    for (int i = 0; i < astAsSequence->size(); i++) {
+        funcCall->setAt(1, astAsSequence->getAt(i)); //set correct argument to func call
+        result->values.push_back(EVAL(funcCall,env)); //call fun on element at position i
+    }
+    return result;
+}
+
+MALTypePtr isNilFunc(std::vector<MALTypePtr> args, EnvPtr env) {
+    checkArgsNumber("nil?", 1, args.size());
+    return std::shared_ptr<MALBoolType>(new MALBoolType(args[0]->type() == MALType::Types::Nil));
+}
+
+MALTypePtr isTrueFunc(std::vector<MALTypePtr> args, EnvPtr env) {
+    checkArgsNumber("true?", 1, args.size());
+    std::shared_ptr<MALBoolType> astAsBool;
+    bool result = args[0]->tryAsBool(astAsBool) && astAsBool->value == true;
+    return std::shared_ptr<MALBoolType>(new MALBoolType(result));
+}
+
+MALTypePtr isFalseFunc(std::vector<MALTypePtr> args, EnvPtr env) {
+    checkArgsNumber("false?", 1, args.size());
+    std::shared_ptr<MALBoolType> astAsBool;
+    bool result = args[0]->tryAsBool(astAsBool) && astAsBool->value == false;
+    return std::shared_ptr<MALBoolType>(new MALBoolType(result));
+}
+
+MALTypePtr isSymbolFunc(std::vector<MALTypePtr> args, EnvPtr env) {
+    checkArgsNumber("symbol?", 1, args.size());
+    return std::shared_ptr<MALBoolType>(new MALBoolType(args[0]->type() == MALType::Types::Symbol));
+}
 
 std::map<std::string, MALFunctor> ns = {
     {"+", add},
@@ -378,6 +438,12 @@ std::map<std::string, MALFunctor> ns = {
     {"first", firstFunc},
     {"rest", restFunc},
     {"throw", throwFunc},
+    {"apply", applyFunc},
+    {"map", mapFunc},
+    {"nil?", isNilFunc},
+    {"true?", isTrueFunc},
+    {"false?", isFalseFunc},
+    {"symbol?", isSymbolFunc},
 };
 
 void addBuiltInOperationsToEnv(EnvPtr env)

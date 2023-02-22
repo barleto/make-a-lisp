@@ -18,6 +18,7 @@ class MALSymbolType;
 class MALListType;
 class MALSequenceType;
 class MALCallableType;
+class MALBoolType;
 
 class MALType : public std::enable_shared_from_this<MALType>
 {
@@ -79,6 +80,15 @@ public:
 			return false;
 		}
 		ptr = std::dynamic_pointer_cast<MALSequenceType>(this->shared_from_this());
+		return true;
+	}
+
+	bool tryAsBool(std::shared_ptr<MALBoolType>& ptr) {
+		if (type() != Types::Bool) {
+			ptr = nullptr;
+			return false;
+		}
+		ptr = std::dynamic_pointer_cast<MALBoolType>(this->shared_from_this());
 		return true;
 	}
 

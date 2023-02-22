@@ -131,15 +131,18 @@ void rep(std::string input, EnvPtr env) {
             PRINT(result);
         }
     }
+    catch (MALException& e) {
+        std::cout << "\033[31mError: " << e.errorValue->to_string(true) << "\033[0m" << std::endl;
+    }
     catch (const std::exception& e) {
-        std::cout << "\033[31m" << e.what() << "\033[0m" << std::endl;
+        std::cout << "\033[31mError:" << e.what() << "\033[0m" << std::endl;
     }
     catch (std::string& e) {
         std::cout << "\033[31mError: " << e << "\033[0m" << std::endl;
     }
     catch (...) {
         std::exception_ptr p = std::current_exception();
-        std::cout << "\033[31m" << p._Current_exception << "\033[0m" << std::endl;
+        std::cout << "Unknown Exception: \033[31m" << p._Current_exception << "\033[0m" << std::endl;
     }
 }
 
