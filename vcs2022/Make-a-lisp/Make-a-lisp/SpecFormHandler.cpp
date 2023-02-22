@@ -253,6 +253,56 @@ std::shared_ptr<HandleSpecialFormResult> handleMacroexpand(MALListTypePtr astLis
     return result;
 }
 
+std::shared_ptr<HandleSpecialFormResult> handleTryCatch(MALListTypePtr astList, EnvPtr env) {
+    checkArgsNumber("try*/catch*", 2, astList->size() - 1);
+    MALSymbolTypePtr astAsSymbol;
+    MALListTypePtr astAsList;
+
+    if (!( astList->getAt(2)->tryAsList(astAsList) && astAsList->size() == 3)) {
+        throw std::runtime_error("ERROR: try* second parameter must be a list of size 3");
+    }
+    if (!(astAsList->getAt(0)->tryAsSymbol(astAsSymbol) && astAsSymbol->name == "catch*")) {
+        throw std::runtime_error("ERROR: try* second parameter must be a list of size 3, with its first element being the symbol 'catch*'");
+    }
+    if (!(astAsList->getAt(1)->tryAsSymbol(astAsSymbol))) {
+        throw std::runtime_error("ERROR: try* second parameter must be a list of size 3, with its second element being a symbol");
+    }
+    if (!(astAsList->getAt(2)->tryAsList(astAsList))) {
+        throw std::runtime_error("ERROR: try* second parameter must be a list of size 3, with its third element being a list");
+    }
+    auto catchBindingValue = astAsSymbol;
+    auto catchBody = astAsList;
+
+    auto sfr = new HandleSpecialFormResult{ false, env, astList->values[1] };
+    std::shared_ptr<MALType> error(new MALStringType(""));
+    auto errorAsString = std::dynamic_pointer_cast<MALStringType>(error);
+    try {
+        sfr->ast = EVAL(astList->values[1], env);
+        std::shared_ptr<HandleSpecialFormResult> result(sfr);
+        return result;
+    }
+    catch (MALException& e) {
+        error = e.errorValue;
+    }
+    catch (std::string& e) {
+        errorAsString->value = e + ", in:\n\t" + astList->values[1]->to_string(true);
+    }
+    catch (std::exception& e) {
+        errorAsString->value = std::string(e.what()) + ", in:\n\t" + astList->values[1]->to_string(true);
+    }
+    catch (...) {
+        errorAsString->value = "Unknown error. Something went wrong running:\n\t" + astList->values[1]->to_string(true);
+    }
+    //If execution reach this, we had an exception.
+    sfr->ast = catchBody; //run catch body
+    EnvPtr newEnv = EnvPtr(new Env(env)); //create new env
+    newEnv->set(catchBindingValue, error); //bind catch error value to catch binding symbol
+    sfr->env = newEnv; //run with new env
+    sfr->tco = true; //this makes sure that the new Env is going to be used
+    std::shared_ptr<HandleSpecialFormResult> result(sfr);
+    return result;
+}
+
 std::shared_ptr<HandleSpecialFormResult> handleSpecialForms(MALListTypePtr astList, EnvPtr env) {
     auto macroedAstList = macroexpand(astList, env);
     if (!macroedAstList->tryAsList(astList) || astList->size() <= 0) {
@@ -290,6 +340,9 @@ std::shared_ptr<HandleSpecialFormResult> handleSpecialForms(MALListTypePtr astLi
     }
     else if (lookupSymbol->name == "macroexpand") {
         return handleMacroexpand(astList, env);
+    }
+    else if (lookupSymbol->name == "try*") {
+        return handleTryCatch(astList, env);
     }
     auto sfr = new HandleSpecialFormResult{ false, env, nullptr };
     std::shared_ptr<HandleSpecialFormResult> result(sfr);

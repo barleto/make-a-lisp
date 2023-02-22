@@ -281,3 +281,9 @@ public:
 	MALAtomType(MALTypePtr ref) : ref(ref) {};
 };
 
+class MALException{
+public: 
+	MALTypePtr errorValue;
+	MALException(MALTypePtr errorVal) : errorValue(errorVal) {};
+};
+

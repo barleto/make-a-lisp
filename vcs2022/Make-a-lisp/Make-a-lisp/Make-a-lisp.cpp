@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <functional>
 #include <assert.h>
+#include <csignal>
 
 #include "linenoise.h"
 #include "Reader.h"
@@ -117,6 +118,7 @@ void PRINT(MALTypePtr result) {
         std::cout << "\033[32m=> " << pr_str(result, true) << "\033[0m" << std::endl;
     }
 }
+
 MALTypePtr readEval(std::string input, EnvPtr env) {
     auto ast = READ(input);
     return EVAL(ast, env);
@@ -129,8 +131,15 @@ void rep(std::string input, EnvPtr env) {
             PRINT(result);
         }
     }
-    catch (std::runtime_error& e) {
+    catch (const std::exception& e) {
         std::cout << "\033[31m" << e.what() << "\033[0m" << std::endl;
+    }
+    catch (std::string& e) {
+        std::cout << "\033[31mError: " << e << "\033[0m" << std::endl;
+    }
+    catch (...) {
+        std::exception_ptr p = std::current_exception();
+        std::cout << "\033[31m" << p._Current_exception << "\033[0m" << std::endl;
     }
 }
 
@@ -167,7 +176,6 @@ void REPL(std::string& input, const char* const& history_path)
         rep(input, replEnv);
     }
 }
-
 
 int main(int argc, char* argv[]) {
     const auto history_path = "history.txt";

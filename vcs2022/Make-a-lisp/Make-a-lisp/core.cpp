@@ -66,7 +66,7 @@ MALTypePtr println(std::vector<MALTypePtr> args, EnvPtr env) {
         result += pr_str(args[i], false) + " ";
     }
     result += pr_str(args[i], false);
-    std::cout << result;
+    std::cout << result << std::endl;
     return nil;
 }
 
@@ -320,14 +320,14 @@ MALTypePtr firstFunc(std::vector<MALTypePtr> args, EnvPtr env) {
 }
 
 MALTypePtr restFunc(std::vector<MALTypePtr> args, EnvPtr env) {
-    checkArgsIsAtLeast("restFunc", 1, args.size());
+    checkArgsIsAtLeast("rest", 1, args.size());
     std::shared_ptr<MALSequenceType> astAsSequence;
     MALListTypePtr newList = MALListTypePtr(new MALListType());
     if (args[0]->type() == MALType::Types::Nil) {
         return newList;
     }
     if (!args[0]->tryAsSequence(astAsSequence)) {
-        throw std::runtime_error("Error: Parameter of 'first' must be a sequence (e.g. list or vector). Found: " + args[0]->to_string(true));
+        throw std::runtime_error("Error: Parameter of 'rest' must be a sequence (e.g. list or vector). Found: " + args[0]->to_string(true));
     }
     if (astAsSequence->size() <= 0) {
         return newList;
@@ -336,6 +336,11 @@ MALTypePtr restFunc(std::vector<MALTypePtr> args, EnvPtr env) {
         newList->push_back(astAsSequence->getAt(i));
     }
     return newList;
+}
+
+MALTypePtr throwFunc(std::vector<MALTypePtr> args, EnvPtr env) {
+    checkArgsIsAtLeast("throw", 1, args.size());
+    throw MALException(args[0]);
 }
 
 
@@ -372,6 +377,7 @@ std::map<std::string, MALFunctor> ns = {
     {"nth", nthFunc},
     {"first", firstFunc},
     {"rest", restFunc},
+    {"throw", throwFunc},
 };
 
 void addBuiltInOperationsToEnv(EnvPtr env)
